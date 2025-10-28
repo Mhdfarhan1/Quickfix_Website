@@ -11,17 +11,25 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $table = 'users';
+    /**
+     * Nama tabel sesuai ERD.
+     */
+    protected $table = 'user';
 
     /**
-     * Kolom yang bisa diisi secara massal.
+     * Primary key sesuai ERD.
+     */
+    protected $primaryKey = 'id_user';
+
+    /**
+     * Kolom yang dapat diisi secara massal.
      */
     protected $fillable = [
         'nama',
         'email',
         'password',
         'role',
-        'phone',
+        'no_hp',
         'foto_profile',
         'is_active',
     ];
@@ -43,27 +51,43 @@ class User extends Authenticatable
     ];
 
     /**
-     * Enkripsi password otomatis sebelum disimpan.
+     * Hash password otomatis sebelum disimpan.
      */
+    /**
+ * Hash password otomatis sebelum disimpan.
+ */
     public function setPasswordAttribute($value)
     {
-        if (!empty($value) && substr($value, 0, 7) !== '$2y$10$') {
+        // Cek apakah value sudah di-hash atau belum
+        if (!empty($value) && !str_starts_with($value, '$2y$')) {
             $this->attributes['password'] = bcrypt($value);
         } else {
             $this->attributes['password'] = $value;
         }
     }
 
-    /**
-     * Contoh relasi (opsional, aktifkan nanti kalau tabelnya sudah ada)
-     */
-    // public function alamat()
-    // {
-    //     return $this->hasMany(AlamatPengguna::class, 'user_id');
-    // }
 
-    // public function teknisiDetail()
-    // {
-    //     return $this->hasOne(TeknisiDetail::class, 'user_id');
-    // }
+    /**
+     * Relasi ke tabel teknisi (1 user = 1 teknisi)
+     */
+    public function teknisi()
+    {
+        return $this->hasOne(Teknisi::class, 'id_user', 'id_user');
+    }
+
+    /**
+     * Relasi ke tabel pelanggan (1 user = 1 pelanggan)
+     */
+    public function pelanggan()
+    {
+        return $this->hasOne(Pelanggan::class, 'id_user', 'id_user');
+    }
+
+    /**
+     * Relasi ke pemesanan (jika dibutuhkan)
+     */
+    public function pemesanan()
+    {
+        return $this->hasMany(Pemesanan::class, 'id_pelanggan', 'id_user');
+    }
 }

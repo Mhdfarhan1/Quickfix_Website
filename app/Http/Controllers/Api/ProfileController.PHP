@@ -62,15 +62,15 @@ class ProfileController extends Controller
             'gambar' => 'required|image|mimes:jpg,jpeg,png|max:4096',
         ]);
 
-        // Upload file ke storage/public/gambar_layanan
+        // simpan ke "public/gambar_layanan"
         $path = $request->file('gambar')->store('gambar_layanan', 'public');
 
-        // Simpan ke DB
+        // simpan file path tanpа "storage/"
         $id = DB::table('gambar_layanan')->insertGetId([
             'id_teknisi' => $request->id_teknisi,
             'id_keahlian' => $request->id_keahlian,
             'nama_file' => $request->file('gambar')->getClientOriginalName(),
-            'url_gambar' => 'storage/' . $path,
+            'url' => asset('storage/' . $path),
             'created_at' => now(),
         ]);
 
@@ -78,19 +78,19 @@ class ProfileController extends Controller
             'success' => true,
             'message' => 'Gambar layanan berhasil diupload',
             'id_gambar' => $id,
-            'url' => asset('storage/' . $path)
+            'url' => asset('storage/' . $path), // untuk Flutter
         ]);
     }
 
+
     // Ambil semua gambar layanan milik teknisi
-    // ✅ Ambil semua gambar layanan milik teknisi
     public function getGambarLayananByTeknisi($id_teknisi)
     {
         $gambarList = DB::table('gambar_layanan')
             ->join('keahlian', 'gambar_layanan.id_keahlian', '=', 'keahlian.id_keahlian')
             ->select(
                 'gambar_layanan.id_gambar',
-                'gambar_layanan.url_gambar', // ganti dari path_gambar
+                'gambar_layanan.url_gambar',
                 'keahlian.nama_keahlian',
                 'keahlian.deskripsi'
             )
@@ -98,15 +98,7 @@ class ProfileController extends Controller
             ->get();
 
         foreach ($gambarList as $gambar) {
-            $gambar->url = Storage::url($gambar->url_gambar);
-        }
-
-        if ($gambarList->isEmpty()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Belum ada gambar layanan untuk teknisi ini',
-                'data' => [],
-            ]);
+            $gambar->url = asset('storage/' . $gambar->url_gambar);
         }
 
         return response()->json([
@@ -114,7 +106,6 @@ class ProfileController extends Controller
             'data' => $gambarList
         ]);
     }
-
 
 
     // Hapus gambar layanan
@@ -126,16 +117,18 @@ class ProfileController extends Controller
             return response()->json(['error' => 'Gambar tidak ditemukan'], 404);
         }
 
-        // Hapus file fisik dari storage
-        if (Storage::exists(str_replace('storage/', 'public/', $gambar->url_gambar))) {
-            Storage::delete(str_replace('storage/', 'public/', $gambar->url_gambar));
+        // ubah ke path public
+        $filePath = 'public/' . $gambar->url_gambar;
+
+        if (Storage::exists($filePath)) {
+            Storage::delete($filePath);
         }
 
-        // Hapus dari database
         DB::table('gambar_layanan')->where('id_gambar', $id)->delete();
 
         return response()->json(['success' => true, 'message' => 'Gambar layanan berhasil dihapus']);
     }
+
 
 
     /* --------------------------------------------------
@@ -162,7 +155,7 @@ class ProfileController extends Controller
 
         foreach ($buktiList as $bukti) {
             // Pastikan foto_bukti sudah pakai format 'storage/...'
-            $bukti->url = Storage::url($bukti->foto_bukti);
+            $bukti->url = asset('storage/bukti/' . $bukti->foto_bukti);
         }
 
         if ($buktiList->isEmpty()) {

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller; // ← tambahkan ini
 use Illuminate\Http\Request;
 use App\Models\BuktiPekerjaan;
 use Illuminate\Support\Facades\Storage;
@@ -13,16 +14,45 @@ class BuktiController extends Controller
      */
     public function index()
     {
-        $bukti = BuktiPekerjaan::with(['teknisi', 'keahlian', 'pemesanan'])
-            ->orderBy('created_at', 'desc')
+        $bukti = BuktiPekerjaan::orderBy('created_at', 'desc')
             ->get()
             ->map(function ($item) {
-                $item->url = asset('storage/uploads/bukti/' . $item->foto_bukti);
+                $item->url = url('storage/bukti/' . $item->foto_bukti);
                 return $item;
             });
 
-        return response()->json($bukti);
+        return response()->json([
+            'status' => true,
+            'data' => $bukti
+        ]);
     }
+
+    public function getRecent()
+    {
+        $bukti = BuktiPekerjaan::with('teknisi')
+            ->orderBy('id_bukti', 'desc')
+            ->take(10)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'nama_teknisi' => $item->teknisi->nama ?? 'Tidak diketahui',
+                    'foto_teknisi' => $item->teknisi->foto_teknisi 
+                        ? url('storage/foto_teknisi/' . $item->teknisi->foto_teknisi)
+                        : null,
+                    'foto_bukti' => $item->foto_bukti 
+                        ? url('storage/bukti/' . $item->foto_bukti)
+                        : null,
+                    'deskripsi' => $item->deskripsi ?? '',
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'count' => $bukti->count(),
+            'data' => $bukti,
+        ]);
+    }
+
 
     /**
      * Menampilkan bukti pekerjaan berdasarkan id_teknisi.
@@ -33,11 +63,15 @@ class BuktiController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($item) {
-                $item->url = asset('storage/uploads/bukti/' . $item->foto_bukti);
+                // URL lengkap ke folder public/storage/bukti/
+                $item->url = url('storage/bukti/' . $item->foto_bukti);
                 return $item;
             });
 
-        return response()->json($bukti);
+        return response()->json([
+            'status' => true,
+            'data' => $bukti
+        ]);
     }
 
     /**
@@ -53,9 +87,9 @@ class BuktiController extends Controller
             'foto_bukti' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // Simpan file ke storage/uploads/bukti
-        $path = $request->file('foto_bukti')->store('uploads/bukti', 'public');
-        $namaFile = basename($path);
+        $file = $request->file('foto_bukti');
+        $namaFile = $file->hashName(); // nama file unik (hash)
+        $file->storeAs('bukti', $namaFile, 'public'); // simpan di storage/app/public/bukti
 
         $bukti = BuktiPekerjaan::create([
             'id_pemesanan' => $request->id_pemesanan,
@@ -65,13 +99,14 @@ class BuktiController extends Controller
             'foto_bukti' => $namaFile,
         ]);
 
-        $bukti->url = asset('storage/' . $path);
+        $bukti->url = asset('storage/bukti/' . $namaFile);
 
         return response()->json([
-            'message' => 'Bukti pekerjaan berhasil ditambahkan.',
+            'message' => 'bukti pekerjaan berhasil ditambahkan.',
             'data' => $bukti
         ]);
     }
+
 
     /**
      * Menghapus bukti pekerjaan.
@@ -81,12 +116,13 @@ class BuktiController extends Controller
         $bukti = BuktiPekerjaan::findOrFail($id);
 
         // Hapus file dari storage
-        if (Storage::disk('public')->exists('uploads/bukti/' . $bukti->foto_bukti)) {
-            Storage::disk('public')->delete('uploads/bukti/' . $bukti->foto_bukti);
+        if (Storage::disk('public')->exists('bukti/' . $bukti->foto_bukti)) {
+            Storage::disk('public')->delete('bukti/' . $bukti->foto_bukti);
         }
+
 
         $bukti->delete();
 
-        return response()->json(['message' => 'Bukti pekerjaan berhasil dihapus.']);
+        return response()->json(['message' => 'bukti pekerjaan berhasil dihapus.']);
     }
 }

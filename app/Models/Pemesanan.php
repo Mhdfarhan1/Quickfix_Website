@@ -19,34 +19,46 @@ class Pemesanan extends Model
         'id_pelanggan',
         'id_teknisi',
         'id_keahlian',
+        'id_alamat',
         'tanggal_booking',
         'keluhan',
+        'harga',
+        'gross_amount',
         'status',
-        'harga'
+        'payment_status',
+        'payment_type',
+        'midtrans_transaction_id',
+        'payment_url',
+        'snap_token',
     ];
 
 
-    /**
-     * Relasi ke pelanggan (setiap pemesanan dimiliki oleh 1 pelanggan)
-     */
+
+
     public function pelanggan()
     {
-        return $this->belongsTo(Pelanggan::class, 'id_pelanggan', 'id_pelanggan');
+        return $this->belongsTo(User::class, 'id_pelanggan', 'id_user');
     }
 
-    /**
-     * Relasi ke teknisi (setiap pemesanan ditangani oleh 1 teknisi)
-     */
     public function teknisi()
     {
         return $this->belongsTo(Teknisi::class, 'id_teknisi', 'id_teknisi');
     }
 
-    /**
-     * Relasi ke keahlian
-     */
     public function keahlian()
     {
         return $this->belongsTo(Keahlian::class, 'id_keahlian', 'id_keahlian');
     }
+
+    public function alamat()
+    {
+        return $this->belongsTo(Alamat::class, 'id_alamat', 'id_alamat');
+    }
+
+    public function buktiPekerjaan()
+    {
+        return $this->hasMany(BuktiPekerjaan::class, 'id_pemesanan', 'id_pemesanan');
+    }
+
+
 }

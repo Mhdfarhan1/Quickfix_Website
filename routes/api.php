@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\BuktiController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\AlamatController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\KeranjangController;
 
 // ===============================
 // API STATUS
@@ -54,6 +56,15 @@ Route::get('/layanan-detail', [TeknisiController::class, 'getLayananDetail']);
 Route::get('/get_pemesanan', [PemesananController::class, 'getPemesanan']);
 Route::middleware('auth:sanctum')->get('/get_pemesanan_by_user', [PemesananController::class, 'getPemesananByUser']);
 Route::post('/add_pemesanan', [PemesananController::class, 'addPemesanan']);
+Route::get('/keranjang', [PemesananController::class, 'getKeranjang']);
+
+// ===============================
+// Keranjang
+// ===============================
+Route::get('/keranjang', [KeranjangController::class, 'getKeranjang']);
+Route::post('/keranjang/add', [KeranjangController::class, 'addKeranjang']);
+Route::delete('/keranjang/{id}', [KeranjangController::class, 'deleteKeranjang']);
+Route::post('/keranjang/checkout', [KeranjangController::class, 'checkout']);
 
 // ===============================
 // PROFILE
@@ -77,24 +88,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::post('/profile/upload-foto', [ProfileController::class, 'uploadFoto']);
 });
-// ===============================
-// 🔹 AKSES GAMBAR DARI STORAGE DENGAN CORS SUPPORT
-// ===============================
-Route::get('storage/{path}', function ($path) {
-    $filePath = storage_path('app/public/' . $path);
-    if (!File::exists($filePath)) {
-        abort(404);
-    }
-
-    $file = File::get($filePath);
-    $type = File::mimeType($filePath);
-
-    return response($file, 200)
-        ->header('Content-Type', $type)
-        ->header('Access-Control-Allow-Origin', '*')  // Tambahkan ini
-        ->header('Access-Control-Allow-Methods', 'GET, OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Origin, Content-Type, Accept');
-})->where('path', '.*');
 
 
 // ===============================
@@ -149,9 +142,27 @@ Route::middleware('auth:sanctum')->group(function () {
 // ===============================
 // 🔹 pembayaran
 // ===============================
+// 🔹 Buat link pembayaran (dipanggil saat user klik "Bayar Sekarang")
 Route::post('/payment/create', [PaymentController::class, 'createPayment']);
-Route::post('/payment/callback', [PaymentController::class, 'callback']);
-Route::post('midtrans/pay/{id}', [PaymentController::class, 'pay']);
+
+// 🔹 Endpoint callback Midtrans (wajib sesuai di dashboard Midtrans)
+Route::post('/payment/notification', [PaymentController::class, 'handleNotification']);
+
+// 🔹 Endpoint untuk Flutter polling status pembayaran
+Route::get('/payment/status', [PaymentController::class, 'checkStatus']);
+
+// 🔹 Endpoint untuk ambil struk pembayaran (setelah sukses)
+Route::get('/get_struk/{kode}', [PaymentController::class, 'getStruk']);
+
+
+// ===============================
+// 🔹 Password reset
+// ===============================
+Route::prefix('password')->group(function () {
+    Route::post('/forgot', [PasswordResetController::class, 'sendResetLink']);
+    Route::post('/reset', [PasswordResetController::class, 'resetPassword']);
+});
+
 
 Route::get('/tes', function () {
     return response()->json(['status' => 'OK']);
@@ -160,3 +171,10 @@ Route::get('/tes', function () {
 Route::get('/test-db', function () {
     return DB::table('pemesanan')->limit(5)->get();
 });
+
+
+// ===============================
+// 🔹 tEKNISI
+// ===============================
+// Teknisi menerima pekerjaan
+Route::post('/pemesanan/{id}/terima', [App\Http\Controllers\Api\PemesananController::class, 'terimaPekerjaan']);

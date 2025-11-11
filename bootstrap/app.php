@@ -20,7 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // 🔹 Daftarkan middleware custom Role
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            
         ]);
+
+        $middleware->append(\App\Http\Middleware\AuditRequest::class);
 
         // Kamu juga bisa daftarkan middleware lain di sini bila perlu
         // $middleware->append(\App\Http\Middleware\TrustProxies::class);

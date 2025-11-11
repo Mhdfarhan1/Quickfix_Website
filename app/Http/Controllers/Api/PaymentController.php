@@ -4,138 +4,156 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use App\Models\Pemesanan;
 use Midtrans\Config;
 use Midtrans\Snap;
 
 class PaymentController extends Controller
 {
+    /**
+     * 🔹 Buat Link Pembayaran (Snap)
+     */
     public function createPayment(Request $request)
     {
-        $order = Pemesanan::find($request->id_pemesanan);
+        Log::info('=== [CREATE PAYMENT] ===', $request->all());
+
+        $order = Pemesanan::where('kode_pemesanan', $request->kode_pemesanan)->first();
         if (!$order) {
             return response()->json(['status' => false, 'message' => 'Pemesanan tidak ditemukan'], 404);
         }
-        dd(config('midtrans.serverKey'));
 
-        // Konfigurasi Midtrans
-        Config::$serverKey = config('midtrans.serverKey');
-        Config::$isProduction = config('midtrans.is_production'); // harus false
-        Config::$clientKey = config('midtrans.clientKey');
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = config('midtrans.is_production');
         Config::$isSanitized = true;
         Config::$is3ds = true;
 
-        $params = [
-            'transaction_details' => [
-                'order_id' => 'ORDER-' . $pemesanan->id_pemesanan . '-' . uniqid(),
-                'gross_amount' => (int) $order->harga > 0 ? $order->harga : 50000,
-            ],
-            'enabled_payments' => ['gopay', 'qris'],
-            'customer_details' => [
-                'first_name' => $order->nama_pelanggan ?? 'User',
-            ],
-        ];
+        try {
+            $params = [
+                'transaction_details' => [
+                    'order_id' => $order->kode_pemesanan . '-' . time(),
+                    'gross_amount' => (int) $order->harga,
+                ],
+                'enabled_payments' => ['qris', 'gopay'],
+                'customer_details' => [
+                    // ambil nama dari relasi pelanggan, bukan kolom langsung
+                    'first_name' => optional($order->pelanggan)->nama ?? 'User',
+                ],
+            ];
 
+            $snapToken = Snap::getSnapToken($params);
+            $paymentUrl = "https://app.sandbox.midtrans.com/snap/v2/vtweb/$snapToken";
 
-        $snapToken = Snap::getSnapToken($params);
+            // Simpan ke tabel
+            $order->update([
+                'gross_amount' => $order->harga,
+                'snap_token' => $snapToken,
+                'payment_url' => $paymentUrl,
+                'payment_status' => 'pending',
+            ]);
 
-        return response()->json([
-            'status' => true,
-            'snap_token' => $snapToken,
-            'payment_url' => "https://app.sandbox.midtrans.com/snap/v2/vtweb/$snapToken",
-        ]);
-        
+            return response()->json([
+                'status' => true,
+                'snap_token' => $snapToken,
+                'payment_url' => $paymentUrl,
+                'kode_pemesanan' => $order->kode_pemesanan,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Gagal membuat SnapToken: ' . $e->getMessage());
+            return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
-    // Webhook / Callback Midtrans
-    public function callback(Request $request)
+    /**
+     * 🔹 Callback/Notification dari Midtrans
+     */
+    public function handleNotification(Request $request)
     {
-        \Log::info($request->all());
+        Log::info("=== [MIDTRANS NOTIFICATION RECEIVED] ===", $request->all());
 
-        $hash = hash('sha512',
-            $request->order_id .
-            $request->status_code .
-            $request->gross_amount .
-            Config::$serverKey
-        );
+        $notif = $request->all();
+        $orderId = $notif['order_id'];
+        $transaction = $notif['transaction_status'] ?? null;
 
-        if ($hash !== $request->signature_key) {
-            return response()->json(['message' => 'Invalid signature'], 403);
-        }
+        // Ambil kode pemesanan dari order_id (hapus timestamp di belakang)
+        $kode = explode('-', $orderId);
+        array_pop($kode);
+        $kodePemesanan = implode('-', $kode);
 
-        $order_code = explode('_', $request->order_id)[0];
-        $order = Pemesanan::where('id_pemesanan', $order_code)->first();
-
+        $order = Pemesanan::where('kode_pemesanan', $kodePemesanan)->first();
         if (!$order) {
+            Log::warning("⚠️ Order $kodePemesanan tidak ditemukan");
             return response()->json(['message' => 'Order not found'], 404);
         }
 
-        switch ($request->transaction_status) {
-            case 'capture':
-            case 'settlement':
-                $order->update(['status' => 'dibayar']);
-                break;
+        // Map payment_status sesuai enum tabel
+        $paymentStatus = match ($transaction) {
+            'settlement', 'capture' => 'settlement',
+            'pending' => 'pending',
+            'deny', 'cancel', 'expire' => 'failed',
+            default => 'failed',
+        };
 
-            case 'pending':
-                $order->update(['status' => 'menunggu_pembayaran']);
-                break;
+        // Map status pekerjaan (kalau nanti ingin ubah otomatis)
+        $statusPekerjaan = match ($paymentStatus) {
+            'settlement' => 'menunggu_diterima',
+            default => $order->status_pekerjaan,
+        };
 
-            case 'expire':
-                $order->update(['status' => 'gagal']);
-                break;
+        // Simpan semua info dari notifikasi
+        $order->update([
+            'payment_status' => $paymentStatus,
+            'payment_type' => $notif['payment_type'] ?? null,
+            'midtrans_transaction_id' => $notif['transaction_id'] ?? null,
+            'status_pekerjaan' => $statusPekerjaan,
+        ]);
 
-            case 'cancel':
-            case 'deny':
-                $order->update(['status' => 'batal']);
-                break;
-        }
-
+        Log::info("✅ Order {$kodePemesanan} diperbarui menjadi {$paymentStatus}");
         return response()->json(['message' => 'OK']);
     }
 
-    public function boot()
+    /**
+     * 🔹 Endpoint Flutter untuk cek status
+     */
+    public function checkStatus(Request $request)
     {
-        Config::$serverKey = config('midtrans.serverKey');
-        Config::$clientKey = config('midtrans.clientKey');
-        Config::$isProduction = config('midtrans.is_production');
-    }
+        $order = Pemesanan::where('kode_pemesanan', $request->kode_pemesanan)->first();
 
-    public function pay($id)
-    {
-        \Log::info('midtrans.serverKey at runtime: ' . config('midtrans.serverKey'));
-
-        Config::$serverKey = config('midtrans.serverKey');
-        Config::$clientKey = config('midtrans.clientKey');
-        Config::$isProduction = config('midtrans.is_production');
-        Config::$isSanitized = true;
-        Config::$is3ds = true;
-        $order = Pemesanan::findOrFail($id);
-
-        // Set gross_amount
-        $order->gross_amount = $order->harga;
-        $order->save();
-
-        // Generate Snap
-        $params = [
-            'transaction_details' => [
-                'order_id' => $order->kode_pemesanan,
-                'gross_amount' => (int)$order->harga,
-            ],
-            'customer_details' => [
-                'first_name' => $order->pelanggan->nama,
-                'email' => $order->pelanggan->email,
-            ]
-        ];
-
-        $snapToken = \Midtrans\Snap::getSnapToken($params);
-
-        $order->snap_token = $snapToken;
-        $order->payment_status = 'pending';
-        $order->save();
+        if (!$order) {
+            return response()->json(['status' => false, 'payment_status' => 'not_found']);
+        }
 
         return response()->json([
-            "snap_token" => $snapToken,
+            'status' => true,
+            'kode_pemesanan' => $order->kode_pemesanan,
+            'payment_status' => $order->payment_status,
         ]);
     }
 
+    /**
+     * 🔹 Ambil data struk pembayaran
+     */
+    public function getStruk($kode)
+    {
+        $pemesanan = Pemesanan::with(['pelanggan', 'teknisi.user', 'alamat', 'keahlian'])
+            ->where('kode_pemesanan', $kode)
+            ->first();
+
+        if (!$pemesanan) {
+            return response()->json(['status' => false, 'message' => 'Data tidak ditemukan'], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'kode_pemesanan' => $pemesanan->kode_pemesanan,
+                'nama_layanan' => $pemesanan->keahlian->nama_keahlian ?? '-',
+                'alamat' => $pemesanan->alamat->alamat_lengkap ?? '-',
+                'tanggal' => $pemesanan->tanggal_booking,
+                'nama_teknisi' => $pemesanan->teknisi->user->nama ?? '-',
+                'harga' => $pemesanan->harga,
+                'status' => $pemesanan->status_pekerjaan,
+            ],
+        ]);
+    }
 }

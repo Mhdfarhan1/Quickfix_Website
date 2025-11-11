@@ -42,6 +42,10 @@ class TeknisiController extends Controller
             return response()->json(['message' => 'Teknisi tidak ditemukan'], 404);
         }
 
+        if ($teknisi->foto_profile) {
+            $teknisi->foto_profile = url('storage/foto_teknisi/' . $teknisi->foto_profile);
+        }
+
         return response()->json($teknisi);
     }
 
@@ -128,10 +132,6 @@ class TeknisiController extends Controller
             ->leftJoin('alamat', 'alamat.id_user', '=', 'user.id_user')
             ->join('keahlian_teknisi', 'keahlian_teknisi.id_teknisi', '=', 'teknisi.id_teknisi')
             ->join('keahlian', 'keahlian.id_keahlian', '=', 'keahlian_teknisi.id_keahlian')
-            ->leftJoin('gambar_layanan', function ($join) {
-                $join->on('gambar_layanan.id_teknisi', '=', 'teknisi.id_teknisi')
-                    ->on('gambar_layanan.id_keahlian', '=', 'keahlian.id_keahlian');
-            })
             ->leftJoin('pemesanan', function ($join) {
                 $join->on('pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
                     ->on('pemesanan.id_teknisi', '=', 'keahlian_teknisi.id_teknisi');
@@ -163,7 +163,13 @@ class TeknisiController extends Controller
             DB::raw('COALESCE(teknisi.rating_avg, 0) AS rating'),
             DB::raw('COALESCE(MIN(pemesanan.harga), 0) AS harga_min'),
             DB::raw('COALESCE(MAX(pemesanan.harga), 0) AS harga_max'),
-            DB::raw('COALESCE(gambar_layanan.url_gambar, "/uploads/default_layanan.jpg") AS gambar')
+            DB::raw('
+                CASE
+                    WHEN keahlian_teknisi.gambar_layanan IS NULL OR keahlian_teknisi.gambar_layanan = ""
+                    THEN "/storage/default_layanan.jpg"
+                    ELSE CONCAT("/gambar_layanan/", keahlian_teknisi.gambar_layanan)
+                END AS gambar
+            ')
         )
         ->distinct()
         ->groupBy(
@@ -172,11 +178,11 @@ class TeknisiController extends Controller
             'alamat.alamat_lengkap',
             'keahlian.id_keahlian',
             'keahlian.nama_keahlian',
-            'gambar_layanan.url_gambar',
-            'teknisi.rating_avg'
+            'teknisi.rating_avg',
+            'keahlian_teknisi.gambar_layanan'
         );
 
-        // 🔽 Sorting aman tanpa error
+        // 🔽 Sorting aman
         switch ($sort) {
             case 'rating':
                 $query->orderBy(DB::raw('COALESCE(teknisi.rating_avg, 0)'), 'DESC');
@@ -188,7 +194,7 @@ class TeknisiController extends Controller
                 $query->orderBy(DB::raw('MAX(pemesanan.harga)'), 'DESC');
                 break;
             default:
-                $query->orderBy('user.nama', 'ASC'); // fallback
+                $query->orderBy('user.nama', 'ASC');
         }
 
         // 📊 Pagination manual
@@ -228,15 +234,27 @@ class TeknisiController extends Controller
             ->first();
 
         // gambar layanan
-        $gambar = DB::table('gambar_layanan')
+        
+        $gambar = DB::table('keahlian_teknisi')
             ->where('id_teknisi', $idTeknisi)
             ->where('id_keahlian', $idKeahlian)
-            ->pluck('url_gambar')
+            ->pluck('gambar_layanan')
+            ->map(function ($path) {
+                // Jika null atau kosong, pakai default
+                if (empty($path)) {
+                    return 'gambar_layanan/default_layanan.jpg';
+                }
+
+                // Pastikan formatnya tanpa slash di depan
+                return 'gambar_layanan/' . ltrim($path, '/');
+            })
             ->toArray();
 
         if (empty($gambar)) {
-            $gambar[] = "/uploads/default_layanan.jpg";
+            $gambar[] = 'gambar_layanan/default_layanan.jpg';
         }
+
+
 
         // harga min max
         $harga = DB::table('keahlian_teknisi')

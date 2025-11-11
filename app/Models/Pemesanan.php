@@ -1,6 +1,5 @@
 <?php
 
-// app/Models/Pemesanan.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +11,7 @@ class Pemesanan extends Model
 
     protected $table = 'pemesanan';
     protected $primaryKey = 'id_pemesanan';
-    public $timestamps = false;
+    public $timestamps = true; // ✅ aktifkan agar created_at & updated_at otomatis terisi
 
     protected $fillable = [
         'kode_pemesanan',
@@ -21,10 +20,11 @@ class Pemesanan extends Model
         'id_keahlian',
         'id_alamat',
         'tanggal_booking',
+        'jam_booking',              // ✅ tambahkan karena ada di tabel
         'keluhan',
         'harga',
         'gross_amount',
-        'status',
+        'status_pekerjaan',
         'payment_status',
         'payment_type',
         'midtrans_transaction_id',
@@ -32,9 +32,10 @@ class Pemesanan extends Model
         'snap_token',
     ];
 
-
-
-
+    /**
+     * 🔹 Relasi ke tabel pengguna (pelanggan)
+     * Pastikan nama model User benar-benar menunjuk ke tabel 'users' atau 'pelanggan'
+     */
     public function pelanggan()
     {
         return $this->belongsTo(User::class, 'id_pelanggan', 'id_user');
@@ -59,6 +60,4 @@ class Pemesanan extends Model
     {
         return $this->hasMany(BuktiPekerjaan::class, 'id_pemesanan', 'id_pemesanan');
     }
-
-
 }

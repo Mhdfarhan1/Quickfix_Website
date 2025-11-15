@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // 🔹 Daftarkan middleware custom Role
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            'admin.auth' => \App\Http\Middleware\AdminAuth::class,
             
         ]);
 

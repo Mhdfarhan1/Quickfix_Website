@@ -6,6 +6,8 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Database\Seeders\AdminSeeder;
+
 
 class DatabaseSeeder extends Seeder
 {
@@ -213,5 +215,10 @@ class DatabaseSeeder extends Seeder
         // ✅ Selesai
         // ========================
         $this->command->info('✅ Database seed lengkap berhasil! Semua data relasi telah diisi.');
+
+
+        $this->call([
+            AdminSeeder::class,
+        ]);
     }
 }

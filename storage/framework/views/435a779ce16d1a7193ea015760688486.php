@@ -8,9 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <link rel="icon" href="{{ asset('assets/img/Logo_quickfix.png') }}?v=2" type="image/png">
-    <link rel="shortcut icon" href="{{ asset('assets/img/Logo_quickfix.png') }}?v=2" type="image/png">
-    <link rel="apple-touch-icon" href="{{ asset('assets/img/Logo_quickfix.png') }}?v=2">
+    <link rel="icon" href="<?php echo e(asset('assets/img/Logo_quickfix.png')); ?>?v=2" type="image/png">
+    <link rel="shortcut icon" href="<?php echo e(asset('assets/img/Logo_quickfix.png')); ?>?v=2" type="image/png">
+    <link rel="apple-touch-icon" href="<?php echo e(asset('assets/img/Logo_quickfix.png')); ?>?v=2">
 
 
     <style>
@@ -194,7 +194,7 @@
             <div class="flex justify-between items-center h-20">
                 <!-- Logo -->
                 <div class="flex items-center gap-3 cursor-pointer">
-                    <img src="{{ asset('assets/img/Logo_quickfix.png') }}" alt="Logo QuickFix"
+                    <img src="<?php echo e(asset('assets/img/Logo_quickfix.png')); ?>" alt="Logo QuickFix"
                         class="w-16 h-16 object-contain rounded-full drop-shadow-lg">
 
                     <span
@@ -221,7 +221,7 @@
                         class="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition font-medium">
                         <i data-lucide="message-circle" class="w-5 h-5"></i> Testimoni
                     </a>
-                    <a href="{{ route('admin.login') }}"
+                    <a href="<?php echo e(route('admin.login')); ?>"
                         class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition">
                         <i data-lucide="log-in" class="w-5 h-5"></i> Login
                     </a>
@@ -312,12 +312,13 @@
                     <div class="grid grid-cols-3 gap-4">
                         <div>
                             <div class="text-2xl font-bold text-blue-600">
-                                {{ $jumlahTeknisi }}
+                                <?php echo e($jumlahTeknisi); ?>
+
                             </div>
                             <div class="text-xs text-gray-600">Teknisi Ahli</div>
                         </div>
                         <div>
-                            <div class="text-2xl font-bold text-blue-600">{{ $jumlahPengguna }}</div>
+                            <div class="text-2xl font-bold text-blue-600"><?php echo e($jumlahPengguna); ?></div>
                             <div class="text-xs text-gray-600">Jumlah Pelanggan</div>
                         </div>
                         <div>
@@ -346,7 +347,7 @@
 
                         <!-- Animated Technician Image -->
                         <div class="relative">
-                            <img src="{{ asset('assets/img/teknisi.jpg') }}" alt="Teknisi QuickFix"
+                            <img src="<?php echo e(asset('assets/img/teknisi.jpg')); ?>" alt="Teknisi QuickFix"
                                 class="w-full max-w-md mx-auto drop-shadow-2xl floating-tech rounded-[2rem]" />
                         </div>
                     </div>
@@ -707,4 +708,4 @@
 
 </body>
 
-</html>
+</html><?php /**PATH D:\Quickfix_Website\resources\views/welcome.blade.php ENDPATH**/ ?>

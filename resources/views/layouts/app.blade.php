@@ -13,6 +13,14 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
     <link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}">
 
+    <!--alpinejs-->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <!--swertalert2-->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
@@ -143,6 +151,8 @@
 
             document.addEventListener('DOMContentLoaded', setActiveLink);
         </script>
+
+        
     @endpush
 
 </body>

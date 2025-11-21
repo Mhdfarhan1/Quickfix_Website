@@ -30,7 +30,7 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-blue-100 text-sm font-medium mb-1">Total Teknisi</p>
-                        <h3 class="text-3xl font-bold mb-2">12</h3>
+                        <h3 class="text-3xl font-bold mb-2">{{ $jumlahTeknisi }}</h3>
                         <div class="flex items-center gap-1 text-sm">
                             <i class="fas fa-user-cog"></i>
                             <span class="text-blue-100">Akun terdaftar</span>

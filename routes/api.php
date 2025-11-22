@@ -13,6 +13,11 @@ use App\Http\Controllers\Api\AlamatController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\KeranjangController;
+use App\Http\Controllers\Api\TeknisiPesananController;
+use App\Http\Controllers\Api\LokasiController;
+use App\Http\Controllers\Api\TrackingController;
+
+
 
 // ===============================
 // API STATUS
@@ -56,7 +61,6 @@ Route::get('/layanan-detail', [TeknisiController::class, 'getLayananDetail']);
 Route::get('/get_pemesanan', [PemesananController::class, 'getPemesanan']);
 Route::middleware('auth:sanctum')->get('/get_pemesanan_by_user', [PemesananController::class, 'getPemesananByUser']);
 Route::post('/add_pemesanan', [PemesananController::class, 'addPemesanan']);
-Route::get('/keranjang', [PemesananController::class, 'getKeranjang']);
 
 // ===============================
 // Keranjang
@@ -177,4 +181,20 @@ Route::get('/test-db', function () {
 // 🔹 tEKNISI
 // ===============================
 // Teknisi menerima pekerjaan
-Route::post('/pemesanan/{id}/terima', [App\Http\Controllers\Api\PemesananController::class, 'terimaPekerjaan']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/pemesanan/{id}/terima', [App\Http\Controllers\Api\TeknisiPesananController::class, 'terimaPekerjaan']);
+    Route::post('/teknisi/pemesanan/{id}/mulai', [TeknisiPesananController::class, 'mulaiKerja']);
+
+});
+Route::middleware('auth:sanctum')->prefix('teknisi')->group(function () {
+    Route::get('/pesanan/baru', [TeknisiPesananController::class, 'pesananBaru']);
+    Route::get('/pesanan/dijadwalkan', [TeknisiPesananController::class, 'dijadwalkan']);
+    Route::get('/pesanan/berjalan', [TeknisiPesananController::class, 'pesananBerjalan']);
+});
+
+Route::post('/update-lokasi-teknisi', [LokasiController::class, 'update']);
+Route::get('/lokasi-teknisi/{id_teknisi}', [LokasiController::class, 'getLokasi']);
+
+Route::post('/tracking/store', [TrackingController::class, 'storeLocation']);
+Route::get('/tracking/latest/{id_teknisi}', [TrackingController::class, 'getLatestLocation']);
+Route::get('/tracking/customer/{id_pemesanan}', [TrackingController::class, 'getCustomerTracking']);

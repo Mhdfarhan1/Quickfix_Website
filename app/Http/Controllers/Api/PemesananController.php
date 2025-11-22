@@ -218,43 +218,5 @@ class PemesananController extends Controller
         ]);
     }
 
-    public function terimaPekerjaan($id)
-    {
-        try {
-            $pemesanan = Pemesanan::find($id);
-
-            if ($pemesanan->id_teknisi !== auth()->user()->id_teknisi) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Anda tidak berhak menerima pesanan ini'
-                ], 403);
-            }
-
-            // Pastikan status sebelumnya adalah "menunggu_diterima"
-            if ($pemesanan->status_pekerjaan !== 'menunggu_diterima') {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Pekerjaan sudah diproses atau tidak bisa diterima lagi'
-                ], 400);
-            }
-
-            // Update status pekerjaan menjadi dijadwalkan
-            $pemesanan->update([
-                'status_pekerjaan' => 'dijadwalkan'
-            ]);
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Pekerjaan berhasil diterima dan dijadwalkan',
-                'data' => $pemesanan
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Gagal menerima pekerjaan: ' . $e->getMessage());
-
-            return response()->json([
-                'status' => false,
-                'message' => 'Terjadi kesalahan server'
-            ], 500);
-        }
-    }
+    
 }

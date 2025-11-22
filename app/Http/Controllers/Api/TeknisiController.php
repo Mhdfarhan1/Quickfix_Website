@@ -6,12 +6,17 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Teknisi;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TeknisiController extends Controller
 {
     // Ambil satu teknisi berdasarkan id
     public function getTeknisi(Request $request)
     {
+
+        Log::info('=== [GET TEKNISI] Request Masuk ===', [
+            'query_params' => $request->all()
+        ]);
         $id = $request->query('id');
 
         if (!$id) {
@@ -98,7 +103,13 @@ class TeknisiController extends Controller
                     'keahlian.nama_keahlian',
                     'keahlian.deskripsi',
                     'kategori.nama_kategori',
-                    DB::raw('COALESCE(gambar_layanan.url_gambar, "/uploads/default_layanan.jpg") as gambar'),
+                    DB::raw('
+                        CASE
+                            WHEN keahlian_teknisi.gambar_layanan IS NULL OR keahlian_teknisi.gambar_layanan = ""
+                            THEN "/storage/default_layanan.jpg"
+                            ELSE CONCAT("/gambar_layanan/", keahlian_teknisi.gambar_layanan)
+                        END AS gambar
+                    '),
                     DB::raw('ROUND(AVG(ulasan.rating), 1) as rating'),
                     DB::raw('MIN(pemesanan.harga) as harga_min'),
                     DB::raw('MAX(pemesanan.harga) as harga_max')

@@ -25,30 +25,28 @@ class TeknisiSeeder extends Seeder
         ];
 
         $buktiImages = [
-            '0wtRve0TuFuY2ykYnQ20A5xHBVTeUR9Ru2HBGEvK.jpg',
-            'DKFjafYaCVjJ9xP25rINue5N2TARy9hljFgHBXng.jpg',
-            'download.jpeg',
-            'download_1.jpeg',
-            'download_2.jpeg',
-            'images.jpeg',
-            'images_1.jpeg',
-            'images_2.jpeg',
-            'images_3.jpeg',
-            'images_4.jpeg',
-            'images_5.jpeg',
-            'images_6.jpeg',
-            'jcRQ9Nm1jxsn9Iw9ULhGGNMKaBPC1mO7GBJD3cPO.jpg',
-            'Tgu4jT7qZOtDZ9HMyiInT39usvqmVVbVgtYrUlzJ.jpg',
-            'tztcAYu0gLZh9fSnHPRExrutNArdqYAb9StKFaOj.jpg'
+            'bukti1.jpeg',
+            'bukti2.jpeg',
+            'bukti3.jpeg',
+            'bukti4.jpeg',
+            'bukti5.jpeg',
+            'bukti6.jpeg',
+            'bukti7.jpeg',
+            'bukti8.jpeg',
+            'bukti9.jpeg',
+            'bukti10.jpeg',
+
         ];
 
         $gambarLayanan = [
-            'gambar_layanan1.jpg',
+            'gambar_layanan1.jpeg',
             'gambar_layanan2.jpeg',
             'gambar_layanan3.jpeg',
             'gambar_layanan4.jpeg',
             'gambar_layanan5.jpeg',
             'gambar_layanan6.jpeg',
+            'gambar_layanan7.jpeg',
+            'gambar_layanan8.jpeg',
         ];
 
         // Ambil semua alamat pelanggan (misal user.role='pelanggan')

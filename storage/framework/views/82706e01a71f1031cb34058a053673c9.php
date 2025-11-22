@@ -1,9 +1,9 @@
-@extends('layouts.app')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
     <main class="flex-1 p-4 md:p-6 overflow-y-auto">
 
-        @if(session('success'))
+        <?php if(session('success')): ?>
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
             <script>
@@ -11,13 +11,13 @@
                     toast: true,
                     position: 'top-end',
                     icon: 'success',
-                    title: "{{ session('success') }}",
+                    title: "<?php echo e(session('success')); ?>",
                     showConfirmButton: false,
                     timer: 3000,
                     timerProgressBar: true,
                 });
             </script>
-        @endif
+        <?php endif; ?>
 
 
 
@@ -30,7 +30,7 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-blue-100 text-sm font-medium mb-1">Total Teknisi</p>
-                        <h3 class="text-3xl font-bold mb-2">{{ $jumlahTeknisi }}</h3>
+                        <h3 class="text-3xl font-bold mb-2"><?php echo e($jumlahTeknisi); ?></h3>
                         <div class="flex items-center gap-1 text-sm">
                             <i class="fas fa-user-cog"></i>
                             <span class="text-blue-100">Akun terdaftar</span>
@@ -140,4 +140,5 @@
             });
         </script>
     </main>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\Quickfix_Website\resources\views/admin/dashboard.blade.php ENDPATH**/ ?>

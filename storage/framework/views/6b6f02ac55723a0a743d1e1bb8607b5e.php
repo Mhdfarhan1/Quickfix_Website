@@ -3,7 +3,7 @@
     <!-- Logo -->
     <div class="flex items-center justify-center h-20 border-b border-gray-200 bg-white">
         <div class="w-16 h-16 rounded-xl flex items-center justify-center ring-4 ring-white shadow-lg">
-            <img src="{{ asset('assets/img/Logo_quickfix.png') }}" alt="Logo"
+            <img src="<?php echo e(asset('assets/img/Logo_quickfix.png')); ?>" alt="Logo"
                 class="w-14 h-14 object-contain rounded-full">
         </div>
         <span
@@ -14,9 +14,9 @@
     <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
 
         <!-- Dashboard -->
-        <a href="{{ route('admin.dashboard') }}"
+        <a href="<?php echo e(route('admin.dashboard')); ?>"
             class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
-           {{ request()->routeIs('admin.dashboard') ? 'active bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+           <?php echo e(request()->routeIs('admin.dashboard') ? 'active bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'); ?>">
             <i class="fas fa-tachometer-alt w-5"></i>
             <span>Dashboard</span>
         </a>
@@ -43,16 +43,16 @@
                     <i class="fas fa-user-shield w-5"></i>
                     <span>Akun Admin</span>
                 </a>
-                <a href="{{ route('admin.teknisi.index') }}"
+                <a href="<?php echo e(route('admin.teknisi.index')); ?>"
                     class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
-                    {{ request()->routeIs('admin.teknisi.index') ? 'bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+                    <?php echo e(request()->routeIs('admin.teknisi.index') ? 'bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'); ?>">
                     <i class="fas fa-user-cog w-5"></i>
                     <span>Akun Teknisi</span>
                 </a>
 
-                <a href="{{ route('admin.user.index') }}"
+                <a href="<?php echo e(route('admin.user.index')); ?>"
                     class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl
-                    {{ request()->routeIs('admin.user.index') ? 'text-blue-600 bg-blue-50 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }} transition-all duration-300">
+                    <?php echo e(request()->routeIs('admin.user.index') ? 'text-blue-600 bg-blue-50 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'); ?> transition-all duration-300">
                     <i class="fas fa-users w-5"></i>
                     <span>Pengguna</span>
                 </a>
@@ -94,7 +94,7 @@
         <div class="flex items-center gap-2">
             <div
                 class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                <img src="{{ asset('assets/img/Logo_quickfix.png') }}" alt="Logo"
+                <img src="<?php echo e(asset('assets/img/Logo_quickfix.png')); ?>" alt="Logo"
                     class="w-10 h-10 object-contain rounded-full">
             </div>
             <span
@@ -108,9 +108,9 @@
 
     <!-- Navigation -->
     <nav class="px-4 py-6 space-y-2">
-        <a href="{{ route('admin.dashboard') }}"
+        <a href="<?php echo e(route('admin.dashboard')); ?>"
             class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
-           {{ request()->routeIs('admin.dashboard') ? 'active bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+           <?php echo e(request()->routeIs('admin.dashboard') ? 'active bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'); ?>">
             <i class="fas fa-tachometer-alt w-5"></i>
             <span>Dashboard</span>
         </a>
@@ -130,7 +130,7 @@
                     <i class="fas fa-user-shield w-5"></i>
                     <span>Akun Admin</span>
                 </a>
-                <a href="{{ route('admin.teknisi.index') }}"
+                <a href="<?php echo e(route('admin.teknisi.index')); ?>"
                     class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300">
                     <i class="fas fa-user-cog w-5"></i>
                     <span>Akun Teknisi</span>
@@ -171,4 +171,4 @@
 <!-- Mobile Overlay -->
 <div id="mobile-overlay" class="hidden fixed inset-0 bg-black/50 z-40 md:hidden"
     @click="$el.classList.add('hidden'); document.getElementById('mobile-sidebar').classList.add('-translate-x-full')">
-</div>
+</div><?php /**PATH D:\Quickfix_Website\resources\views/layouts/sidebar.blade.php ENDPATH**/ ?>

@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'QuickFix | Admin Dashboard')</title>
+    <title><?php echo $__env->yieldContent('title', 'QuickFix | Admin Dashboard'); ?></title>
 
     <!-- CSS Files -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.tailwindcss.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
-    <link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}">
+    <link rel="stylesheet" href="<?php echo e(asset('assets/css/custom.css')); ?>">
 
     <!--alpinejs-->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
@@ -25,9 +25,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
-    <link rel="icon" href="{{ asset('assets/img/Logo_quickfix.png') }}?v=2" type="image/png">
-    <link rel="shortcut icon" href="{{ asset('assets/img/Logo_quickfix.png') }}?v=2" type="image/png">
-    <link rel="apple-touch-icon" href="{{ asset('assets/img/Logo_quickfix.png') }}?v=2">
+    <link rel="icon" href="<?php echo e(asset('assets/img/Logo_quickfix.png')); ?>?v=2" type="image/png">
+    <link rel="shortcut icon" href="<?php echo e(asset('assets/img/Logo_quickfix.png')); ?>?v=2" type="image/png">
+    <link rel="apple-touch-icon" href="<?php echo e(asset('assets/img/Logo_quickfix.png')); ?>?v=2">
 
 
 
@@ -35,22 +35,22 @@
     <style>
     </style>
 
-    @stack('styles')
+    <?php echo $__env->yieldPushContent('styles'); ?>
 </head>
 
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 flex min-h-screen">
 
     <!-- Sidebar -->
-    @include('layouts.sidebar')
+    <?php echo $__env->make('layouts.sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <!-- Main Content Area -->
     <main class="flex-1 flex flex-col min-h-screen w-full md:w-auto">
         <!-- Top Navbar -->
-        @include('layouts.header')
+        <?php echo $__env->make('layouts.header', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
         <!-- Page Content -->
         <section class="flex-1 p-3 sm:p-4 md:p-6 fade-in-up">
-            @yield('content')
+            <?php echo $__env->yieldContent('content'); ?>
         </section>
     </main>
 
@@ -122,9 +122,9 @@
         // cdn sweetalert2
     </script>
 
-    @stack('scripts')
+    <?php echo $__env->yieldPushContent('scripts'); ?>
 
-    @push('scripts')
+    <?php $__env->startPush('scripts'); ?>
         <script>
             // Sidebar link aktif
             function setActiveLink() {
@@ -153,8 +153,8 @@
         </script>
 
         
-    @endpush
+    <?php $__env->stopPush(); ?>
 
 </body>
 
-</html>
+</html><?php /**PATH D:\Quickfix_Website\resources\views/layouts/app.blade.php ENDPATH**/ ?>

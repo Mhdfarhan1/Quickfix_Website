@@ -155,7 +155,7 @@ class ProfileController extends Controller
 
         foreach ($buktiList as $bukti) {
             // Pastikan foto_bukti sudah pakai format 'storage/...'
-            $bukti->url = asset('storage/bukti/' . $bukti->foto_bukti);
+            $bukti->url = asset('storage/foto/bukti/' . $bukti->foto_bukti);
         }
 
         if ($buktiList->isEmpty()) {

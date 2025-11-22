@@ -100,7 +100,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::get('/bukti', [BuktiController::class, 'index']);
 Route::get('/bukti/{id_teknisi}', [BuktiController::class, 'getByTeknisi']);
-Route::post('/bukti', [BuktiController::class, 'store']);
 Route::delete('/bukti/{id}', [BuktiController::class, 'destroy']);
 
 Route::get('/teknisi/{id_teknisi}/tugas', [TaskController::class, 'getTasksByTeknisi']);
@@ -190,6 +189,7 @@ Route::middleware('auth:sanctum')->prefix('teknisi')->group(function () {
     Route::get('/pesanan/baru', [TeknisiPesananController::class, 'pesananBaru']);
     Route::get('/pesanan/dijadwalkan', [TeknisiPesananController::class, 'dijadwalkan']);
     Route::get('/pesanan/berjalan', [TeknisiPesananController::class, 'pesananBerjalan']);
+    Route::post('/pemesanan/{id}/sampai-lokasi', [TeknisiPesananController::class, 'sampaiLokasi']);
 });
 
 Route::post('/update-lokasi-teknisi', [LokasiController::class, 'update']);
@@ -198,3 +198,9 @@ Route::get('/lokasi-teknisi/{id_teknisi}', [LokasiController::class, 'getLokasi'
 Route::post('/tracking/store', [TrackingController::class, 'storeLocation']);
 Route::get('/tracking/latest/{id_teknisi}', [TrackingController::class, 'getLatestLocation']);
 Route::get('/tracking/customer/{id_pemesanan}', [TrackingController::class, 'getCustomerTracking']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/pemesanan/{id}/upload-bukti', [BuktiController::class, 'uploadBukti']);
+    Route::get('/pemesanan/{id}/bukti', [BuktiController::class, 'getByPemesanan']);
+    Route::post('/pemesanan/{id}/selesaikan', [TeknisiPesananController::class, 'selesaikanPekerjaan']);
+});

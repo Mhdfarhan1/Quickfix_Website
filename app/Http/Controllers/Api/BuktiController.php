@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller; // ← tambahkan ini
 use Illuminate\Http\Request;
 use App\Models\BuktiPekerjaan;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB; 
+
 
 class BuktiController extends Controller
 {
@@ -17,7 +19,7 @@ class BuktiController extends Controller
         $bukti = BuktiPekerjaan::orderBy('created_at', 'desc')
             ->get()
             ->map(function ($item) {
-                $item->url = url('storage/bukti/' . $item->foto_bukti);
+                $item->url = url('storage/foto/bukti/' . $item->foto_bukti);
                 return $item;
             });
 
@@ -40,7 +42,7 @@ class BuktiController extends Controller
                         ? url('storage/foto_teknisi/' . $item->teknisi->foto_teknisi)
                         : null,
                     'foto_bukti' => $item->foto_bukti 
-                        ? url('storage/bukti/' . $item->foto_bukti)
+                        ? url('storage/foto/bukti/' . $item->foto_bukti)
                         : null,
                     'deskripsi' => $item->deskripsi ?? '',
                 ];
@@ -64,7 +66,7 @@ class BuktiController extends Controller
             ->get()
             ->map(function ($item) {
                 // URL lengkap ke folder public/storage/bukti/
-                $item->url = url('storage/bukti/' . $item->foto_bukti);
+                $item->url = url('storage/foto/bukti/' . $item->foto_bukti);
                 return $item;
             });
 
@@ -77,34 +79,85 @@ class BuktiController extends Controller
     /**
      * Menyimpan bukti pekerjaan baru.
      */
-    public function store(Request $request)
+
+    public function getByPemesanan($id_pemesanan)
     {
-        $request->validate([
-            'id_pemesanan' => 'required|exists:pemesanan,id_pemesanan',
-            'id_teknisi' => 'required|exists:teknisi,id_teknisi',
-            'id_keahlian' => 'required|exists:keahlian,id_keahlian',
-            'deskripsi' => 'nullable|string',
-            'foto_bukti' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
-
-        $file = $request->file('foto_bukti');
-        $namaFile = $file->hashName(); // nama file unik (hash)
-        $file->storeAs('bukti', $namaFile, 'public'); // simpan di storage/app/public/bukti
-
-        $bukti = BuktiPekerjaan::create([
-            'id_pemesanan' => $request->id_pemesanan,
-            'id_teknisi' => $request->id_teknisi,
-            'id_keahlian' => $request->id_keahlian,
-            'deskripsi' => $request->deskripsi,
-            'foto_bukti' => $namaFile,
-        ]);
-
-        $bukti->url = asset('storage/bukti/' . $namaFile);
+        $bukti = BuktiPekerjaan::where('id_pemesanan', $id_pemesanan)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function ($item) {
+                $item->url = url('storage/foto/bukti/' . $item->foto_bukti);
+                return $item;
+            });
 
         return response()->json([
-            'message' => 'bukti pekerjaan berhasil ditambahkan.',
+            'status' => true,
+            'total' => $bukti->count(),
             'data' => $bukti
         ]);
+    }
+
+
+    public function uploadBukti(Request $request, $id)
+    {
+        $request->validate([
+            'foto'     => 'required|array',
+            'foto.*'   => 'image|mimes:jpg,jpeg,png|max:5120'
+        ]);
+
+        $user = $request->user();
+
+        $id_teknisi = DB::table('teknisi')
+            ->where('id_user', $user->id_user)
+            ->value('id_teknisi');
+
+        $pemesanan = DB::table('pemesanan')
+            ->where('id_pemesanan', $id)
+            ->where('id_teknisi', $id_teknisi)
+            ->where('status_pekerjaan', 'sedang_bekerja')
+            ->first();
+
+        if (!$pemesanan) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Pemesanan tidak valid'
+            ], 403);
+        }
+
+        $files = $request->file('foto');
+        $data = [];
+
+        foreach ($files as $file) {
+
+            $namaFile = 'bukti_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+            // simpan ke: storage/app/public/bukti
+            $file->storeAs('foto/bukti', $namaFile, 'public');
+
+            // simpan ke DB: hanya nama file
+            DB::table('bukti_pekerjaan')->insert([
+                'id_pemesanan' => $id,
+                'id_teknisi'   => $id_teknisi,
+                'id_keahlian'  => $pemesanan->id_keahlian,
+                'deskripsi'    => null,
+                'foto_bukti'   => $namaFile, // ✅ hanya nama file
+                'created_at'   => now(),
+                'updated_at'   => now()
+            ]);
+
+            $data[] = [
+                'nama_file' => $namaFile,
+                'url' => asset('storage/foto/bukti/' . $namaFile)
+
+            ];
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Foto bukti berhasil diupload',
+            'total_upload' => count($data),
+            'data' => $data
+        ], 201);
     }
 
 
@@ -116,8 +169,8 @@ class BuktiController extends Controller
         $bukti = BuktiPekerjaan::findOrFail($id);
 
         // Hapus file dari storage
-        if (Storage::disk('public')->exists('bukti/' . $bukti->foto_bukti)) {
-            Storage::disk('public')->delete('bukti/' . $bukti->foto_bukti);
+        if (Storage::disk('public')->exists('foto/bukti/' . $bukti->foto_bukti)) {
+            Storage::disk('public')->delete('foto/bukti/' . $bukti->foto_bukti);
         }
 
 

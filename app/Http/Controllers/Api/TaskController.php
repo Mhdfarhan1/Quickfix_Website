@@ -40,20 +40,34 @@ class TaskController extends Controller
             'data' => $tasks
         ], 200);
     }
-    public function selesaikanTugas(Request $request)
+    public function selesaikanPekerjaan($id_pemesanan)
     {
-        $request->validate([
-            'id_pemesanan' => 'required|exists:pemesanan,id_pemesanan',
-            'status' => 'required'
+        $jumlahBukti = \App\Models\BuktiPekerjaan::where('id_pemesanan', $id_pemesanan)->count();
+
+        if ($jumlahBukti < 1) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Upload minimal 1 foto bukti terlebih dahulu'
+            ], 400);
+        }
+
+        $pesanan = \App\Models\Pemesanan::find($id_pemesanan);
+
+        if ($pesanan->status_pekerjaan === 'selesai') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Pesanan sudah selesai dan dikunci'
+            ], 403);
+        }
+
+        $pesanan->update([
+            'status_pekerjaan' => 'selesai'
         ]);
 
-        $pesanan = Pemesanan::find($request->id_pemesanan);
-        $pesanan->status = $request->status;
-        $pesanan->save();
-
         return response()->json([
-            'message' => 'Status berhasil diubah!'
-        ], 200);
+            'status' => true,
+            'message' => 'Pekerjaan berhasil diselesaikan'
+        ]);
     }
 
 

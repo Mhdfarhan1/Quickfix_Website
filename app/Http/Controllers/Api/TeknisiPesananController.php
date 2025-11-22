@@ -366,4 +366,162 @@ class TeknisiPesananController extends Controller
             ], 500);
         }
     }
+
+    public function sampaiLokasi(Request $request, $id)
+    {
+        try {
+            \Log::info("=== SAMPAI Lokasi - REQUEST ===", [
+                'id_pemesanan' => $id,
+                'user_login' => $request->user()->id_user ?? null
+            ]);
+
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Token tidak valid'
+                ], 401);
+            }
+
+            // Ambil id teknisi
+            $id_teknisi = DB::table('teknisi')
+                ->where('id_user', $user->id_user)
+                ->value('id_teknisi');
+
+            if (!$id_teknisi) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Akun ini bukan teknisi'
+                ], 403);
+            }
+
+            // Cek status sekarang
+            $cek = DB::table('pemesanan')
+                ->where('id_pemesanan', $id)
+                ->where('id_teknisi', $id_teknisi)
+                ->first();
+
+            if (!$cek) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Pemesanan tidak ditemukan'
+                ], 404);
+            }
+
+            if ($cek->status_pekerjaan !== 'menuju_lokasi') {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Status harus menuju_lokasi untuk bisa sampai lokasi',
+                    'status_sekarang' => $cek->status_pekerjaan
+                ], 400);
+            }
+
+            // Update status
+            DB::table('pemesanan')
+                ->where('id_pemesanan', $id)
+                ->where('id_teknisi', $id_teknisi)
+                ->update([
+                    'status_pekerjaan' => 'sedang_bekerja',
+                    'updated_at' => now()
+                ]);
+
+            \Log::info("✅ STATUS DIUBAH KE SEDANG_BEKERJA", [
+                'id_pemesanan' => $id
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Teknisi sudah sampai lokasi dan mulai bekerja'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error("ERROR SAMPAI LOKASI:", [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Terjadi kesalahan server'
+            ], 500);
+        }
+    }
+
+    public function sedangBekerja(Request $request)
+    {
+        $authId = $request->user()->id_user;
+
+        $idTeknisi = DB::table('teknisi')
+            ->where('id_user', $authId)
+            ->value('id_teknisi');
+
+        if (!$idTeknisi) {
+            return response()->json([
+                'status' => true,
+                'data' => []
+            ]);
+        }
+
+        $data = DB::table('pemesanan')
+            ->join('user as pelanggan', 'pemesanan.id_pelanggan', '=', 'pelanggan.id_user')
+            ->join('alamat', 'pemesanan.id_alamat', '=', 'alamat.id_alamat')
+            ->join('keahlian', 'pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
+            ->where('pemesanan.id_teknisi', $idTeknisi)
+            ->where('pemesanan.status_pekerjaan', 'sedang_bekerja')
+            ->select(
+                'pemesanan.kode_pemesanan',
+                'pelanggan.nama as nama_pelanggan',
+                'pemesanan.id_keahlian',
+                'pemesanan.id_alamat',
+                'pemesanan.tanggal_booking',
+                'pemesanan.jam_booking',
+                'pemesanan.keluhan',
+                'pemesanan.harga',
+                'pemesanan.status_pekerjaan'
+            )
+            ->orderBy('pemesanan.updated_at', 'DESC')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $data
+        ]);
+    }
+
+
+
+    public function selesaikanPekerjaan(Request $request, $id)
+    {
+        $user = $request->user();
+
+        $id_teknisi = DB::table('teknisi')
+            ->where('id_user', $user->id_user)
+            ->value('id_teknisi');
+
+        // Cek apakah sudah upload minimal 1 foto
+        $adaBukti = DB::table('bukti_pekerjaan')
+            ->where('id_pemesanan', $id)
+            ->exists();
+
+        if (!$adaBukti) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Upload foto bukti dulu sebelum menyelesaikan pekerjaan'
+            ], 400);
+        }
+
+        DB::table('pemesanan')
+            ->where('id_pemesanan', $id)
+            ->where('id_teknisi', $id_teknisi)
+            ->update([
+                'status_pekerjaan' => 'selesai',
+                'updated_at' => now()
+            ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Pekerjaan telah diselesaikan'
+        ]);
+    }
+
 }

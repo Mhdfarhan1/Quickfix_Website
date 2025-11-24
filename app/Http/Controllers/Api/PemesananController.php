@@ -32,17 +32,22 @@ class PemesananController extends Controller
                 'pemesanan.id_pemesanan',
                 'pemesanan.kode_pemesanan',
                 'pemesanan.tanggal_booking',
-                'pemesanan.jam_booking', // ✅ pastikan kolom ini ada di tabel
+                'pemesanan.jam_booking',
                 'pemesanan.keluhan',
                 'pemesanan.harga',
-                'pemesanan.status_pekerjaan as status', // ✅ alias agar Flutter dapat "status"
+                'pemesanan.status_pekerjaan as status',
+
                 'pelanggan.nama as nama_pelanggan',
                 'keahlian.nama_keahlian',
+
                 'alamat.alamat_lengkap',
                 'alamat.kota',
                 'alamat.provinsi',
+
                 'bukti_pekerjaan.foto_bukti',
-                'teknisi_user.nama as nama_teknisi'
+
+                'teknisi_user.nama as nama_teknisi',
+                'teknisi_user.foto_profile as foto_teknisi' // ✅ AMBIL DARI USER
             );
 
 
@@ -50,6 +55,20 @@ class PemesananController extends Controller
         if ($id_pelanggan) $query->where('pemesanan.id_pelanggan', $id_pelanggan);
 
         $data = $query->orderByDesc('pemesanan.id_pemesanan')->limit($limit)->get();
+
+        $data->transform(function ($item) {
+
+            $item->foto_teknisi_url = $item->foto_teknisi
+                ? url('storage/foto/foto_teknisi/' . $item->foto_teknisi)
+                : url('storage/default.png');
+
+            $item->foto_bukti_url = $item->foto_bukti
+                ? url('storage/foto/bukti/' . $item->foto_bukti)
+                : null;
+
+            return $item;
+        });
+
 
         $duration = round(microtime(true) - $start, 3);
 

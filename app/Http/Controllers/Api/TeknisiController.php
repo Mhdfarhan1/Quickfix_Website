@@ -48,7 +48,7 @@ class TeknisiController extends Controller
         }
 
         if ($teknisi->foto_profile) {
-            $teknisi->foto_profile = url('storage/foto_teknisi/' . $teknisi->foto_profile);
+            $teknisi->foto_profile = url('storage/foto/foto_teknisi/' . $teknisi->foto_profile);
         }
 
         return response()->json($teknisi);
@@ -251,13 +251,16 @@ class TeknisiController extends Controller
             ->where('id_keahlian', $idKeahlian)
             ->pluck('gambar_layanan')
             ->map(function ($path) {
-                // Jika null atau kosong, pakai default
+
                 if (empty($path)) {
-                    return 'gambar_layanan/default_layanan.jpg';
+                    return 'foto/gambar_layanan/default_layanan.jpg';
                 }
 
-                // Pastikan formatnya tanpa slash di depan
-                return 'gambar_layanan/' . ltrim($path, '/');
+                if (str_starts_with($path, 'foto/gambar_layanan')) {
+                    return $path;
+                }
+
+                return 'foto/gambar_layanan/' . ltrim($path, '/');
             })
             ->toArray();
 

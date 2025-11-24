@@ -12,8 +12,16 @@ class TeknisiPesananController extends Controller
     public function pesananBaru(Request $request)
     {
         $teknisiUserId = DB::table('teknisi')
-            ->where('id_user', auth()->id())
+            ->where('id_user', $request->user()->id_user)
             ->value('id_teknisi');
+
+            if (!$teknisiUserId) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Teknisi tidak ditemukan pada user ini',
+                    'id_user' => $request->user()->id_user
+                ]);
+            }
 
 
         $data = DB::table('pemesanan')

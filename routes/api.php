@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\KeranjangController;
 use App\Http\Controllers\Api\TeknisiPesananController;
 use App\Http\Controllers\Api\LokasiController;
 use App\Http\Controllers\Api\TrackingController;
+use App\Http\Controllers\Api\AuthOtpController;
 
 
 
@@ -41,6 +42,12 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware(['auth:sanctum', 'role:teknisi'])->group(function () {
     Route::get('/tugas-teknisi', [TaskController::class, 'getTasksByTeknisi']);
+});
+
+Route::prefix('auth')->group(function () {
+    Route::post('register-request', [AuthOtpController::class, 'registerRequest']);
+    Route::post('verify-otp', [AuthOtpController::class, 'verifyOtp']);
+    Route::post('resend-otp', [AuthOtpController::class, 'resendOtp']);
 });
 
 
@@ -203,4 +210,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/pemesanan/{id}/upload-bukti', [BuktiController::class, 'uploadBukti']);
     Route::get('/pemesanan/{id}/bukti', [BuktiController::class, 'getByPemesanan']);
     Route::post('/pemesanan/{id}/selesaikan', [TeknisiPesananController::class, 'selesaikanPekerjaan']);
+});
+
+Route::get('/test', function(){
+    return response()->json(["status" => "API hidup"]);
 });

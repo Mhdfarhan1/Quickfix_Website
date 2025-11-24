@@ -5,44 +5,81 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Pemesanan;
-use App\Models\User;
-use App\Models\Alamat;
+use Illuminate\Support\Facades\DB;
+use App\Models\BuktiPekerjaan;
 
 class TaskController extends Controller
 {
-    public function getTasksByTeknisi($id_teknisi)
+    public function getTasksByTeknisi(Request $request)
     {
-        $tasks = Pemesanan::where('id_teknisi', $id_teknisi)
+        $idUser = $request->user()->id_user;
+
+        $idTeknisi = DB::table('teknisi')
+            ->where('id_user', $idUser)
+            ->value('id_teknisi');
+
+        $tasks = DB::table('pemesanan')
             ->join('user', 'pemesanan.id_pelanggan', '=', 'user.id_user')
-            ->leftJoin('alamat', 'user.id_user', '=', 'alamat.id_user')
+            ->leftJoin('alamat', 'pemesanan.id_alamat', '=', 'alamat.id_alamat')
+            ->leftJoin('keahlian', 'pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
+            ->leftJoin('lokasi_teknisi', 'pemesanan.id_teknisi', '=', 'lokasi_teknisi.id_teknisi')
+
+            ->where('pemesanan.id_teknisi', $idTeknisi)
+            ->whereDate('pemesanan.tanggal_booking', today())
+            ->whereIn('pemesanan.status_pekerjaan', [
+                'dijadwalkan',
+                'menuju_lokasi',
+                'sedang_bekerja'
+            ])
+
             ->select(
                 'pemesanan.id_pemesanan as id',
+                'pemesanan.id_teknisi',
+                'pemesanan.id_pelanggan',
+                'pemesanan.id_keahlian',
+                'pemesanan.id_alamat',
+
+                'pemesanan.kode_pemesanan',
                 'user.nama as nama_pelanggan',
-                'pemesanan.keluhan as deskripsi',
-                'pemesanan.status as status_tugas',
+                'pemesanan.keluhan',
+                'pemesanan.status_pekerjaan',
                 'pemesanan.harga',
+
+                'keahlian.nama_keahlian',
                 'alamat.alamat_lengkap',
                 'alamat.latitude',
-                'alamat.longitude'
+                'alamat.longitude',
+
+                'lokasi_teknisi.latitude as latitude_teknisi',
+                'lokasi_teknisi.longitude as longitude_teknisi',
+
+                'pemesanan.tanggal_booking',
+                'pemesanan.jam_booking',
+                'pemesanan.created_at'
             )
-            ->orderBy('pemesanan.updated_at', 'desc')
+            ->orderBy('pemesanan.jam_booking', 'asc')
             ->get();
 
         if ($tasks->isEmpty()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Belum ada tugas untuk teknisi ini.'
-            ], 200);
+                'message' => 'Tidak ada tugas hari ini',
+                'data' => []
+            ]);
         }
 
         return response()->json([
             'status' => true,
+            'debug_sample' => $tasks->first(), 
             'data' => $tasks
-        ], 200);
+        ]);
     }
+
+
+
     public function selesaikanPekerjaan($id_pemesanan)
     {
-        $jumlahBukti = \App\Models\BuktiPekerjaan::where('id_pemesanan', $id_pemesanan)->count();
+        $jumlahBukti = BuktiPekerjaan::where('id_pemesanan', $id_pemesanan)->count();
 
         if ($jumlahBukti < 1) {
             return response()->json([
@@ -51,7 +88,14 @@ class TaskController extends Controller
             ], 400);
         }
 
-        $pesanan = \App\Models\Pemesanan::find($id_pemesanan);
+        $pesanan = Pemesanan::where('id_pemesanan', $id_pemesanan)->first();
+
+        if (!$pesanan) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Pesanan tidak ditemukan'
+            ], 404);
+        }
 
         if ($pesanan->status_pekerjaan === 'selesai') {
             return response()->json([
@@ -69,6 +113,4 @@ class TaskController extends Controller
             'message' => 'Pekerjaan berhasil diselesaikan'
         ]);
     }
-
-
 }

@@ -74,8 +74,10 @@ return new class extends Migration {
             $table->boolean('is_default')->default(false);
             $table->timestamps();
 
-            $table->foreign('id_user')->references('id_user')->on('user')->onDelete('cascade');
-            $table->unique(['id_user', 'is_default'], 'unique_default_per_user');
+            $table->foreign('id_user')
+                ->references('id_user')
+                ->on('user')
+                ->onDelete('cascade');
         });
 
         // =======================

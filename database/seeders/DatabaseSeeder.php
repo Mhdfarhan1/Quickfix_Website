@@ -99,15 +99,31 @@ class DatabaseSeeder extends Seeder
         // ========================
         // 5️⃣ ALAMAT
         // ========================
-        $idAlamat = DB::table('alamat')->insertGetId([
+
+        // Alamat 1 - Default
+        $idAlamatRumah = DB::table('alamat')->insertGetId([
             'id_user' => $idPelanggan,
             'label' => 'Rumah Utama',
             'alamat_lengkap' => 'Jl. Mawar No. 123, Jakarta Selatan',
-            'kota' => 'Jakarta',
+            'kota' => 'Jakarta Selatan',
             'provinsi' => 'DKI Jakarta',
-            'latitude' => -6.2000000,
-            'longitude' => 106.8166660,
+            'latitude' => -6.2607181,
+            'longitude' => 106.7816398,
             'is_default' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Alamat 2 - Tidak default
+        $idAlamatKantor = DB::table('alamat')->insertGetId([
+            'id_user' => $idPelanggan,
+            'label' => 'Kantor',
+            'alamat_lengkap' => 'Jl. Jend. Sudirman Kav. 10, Jakarta Pusat',
+            'kota' => 'Jakarta Pusat',
+            'provinsi' => 'DKI Jakarta',
+            'latitude' => -6.2145285,
+            'longitude' => 106.8203823,
+            'is_default' => false,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -130,7 +146,7 @@ class DatabaseSeeder extends Seeder
                 'id_pelanggan' => $idPelanggan,
                 'id_teknisi' => $idTeknisi,
                 'id_keahlian' => $idKeahlian,
-                'id_alamat' => $idAlamat,
+                'id_alamat' => rand(0,1) == 1 ? $idAlamatRumah : $idAlamatKantor,
                 'tanggal_booking' => now()->addDays(rand(0, 5)),
                 'keluhan' => 'AC tidak dingin, mohon dicek ulang.',
                 'harga' => rand(150000, 500000),

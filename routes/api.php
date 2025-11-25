@@ -215,3 +215,5 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/test', function(){
     return response()->json(["status" => "API hidup"]);
 });
+
+Route::middleware('auth:sanctum')->get('/teknisi/riwayat', [TaskController::class, 'getRiwayatTeknisi']);

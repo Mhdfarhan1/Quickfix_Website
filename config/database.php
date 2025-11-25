@@ -31,6 +31,19 @@ return [
 
     'connections' => [
 
+        'audit' => [
+            'driver' => 'mysql',
+            'host' => env('DB_AUDIT_HOST', '127.0.0.1'),
+            'port' => env('DB_AUDIT_PORT', '3306'),
+            'database' => env('DB_AUDIT_DATABASE', 'qfx_audit'),
+            'username' => env('DB_AUDIT_USERNAME', 'root'),
+            'password' => env('DB_AUDIT_PASSWORD', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => false,
+        ],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),

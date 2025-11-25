@@ -84,10 +84,10 @@ class HandleFailedLogin
                     'updated_at' => now(),
                 ];
 
-                DB::table('incidents')->insert($incident);
+                DB::connection('audit')->table('incidents')->insert($incident);
 
                 // Block IP in DB table
-                DB::table('blocked_ips')->updateOrInsert(
+                DB::connection('audit')->table('blocked_ips')->updateOrInsert(
                     ['ip' => $ip],
                     [
                         'blocked_until' => $lockUntil,

@@ -16,6 +16,8 @@ class User extends Authenticatable
      */
     protected $table = 'user';
 
+    protected $connection = 'mysql'; // <--- tambahkan ini
+
     /**
      * Primary key sesuai ERD.
      */

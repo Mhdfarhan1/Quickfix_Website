@@ -25,11 +25,11 @@ class TaskController extends Controller
             ->leftJoin('lokasi_teknisi', 'pemesanan.id_teknisi', '=', 'lokasi_teknisi.id_teknisi')
 
             ->where('pemesanan.id_teknisi', $idTeknisi)
-            ->whereDate('pemesanan.tanggal_booking', today())
             ->whereIn('pemesanan.status_pekerjaan', [
                 'dijadwalkan',
                 'menuju_lokasi',
-                'sedang_bekerja'
+                'sedang_bekerja',
+                'selesai'
             ])
 
             ->select(
@@ -60,14 +60,7 @@ class TaskController extends Controller
             ->orderBy('pemesanan.jam_booking', 'asc')
             ->get();
 
-        if ($tasks->isEmpty()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Tidak ada tugas hari ini',
-                'data' => []
-            ]);
-        }
-
+        
         return response()->json([
             'status' => true,
             'debug_sample' => $tasks->first(), 
@@ -113,4 +106,51 @@ class TaskController extends Controller
             'message' => 'Pekerjaan berhasil diselesaikan'
         ]);
     }
+
+    public function getRiwayatTeknisi(Request $request)
+    {
+        $idUser = $request->user()->id_user;
+
+        // Cari id_teknisi berdasarkan user yang sedang login
+        $idTeknisi = DB::table('teknisi')
+            ->where('id_user', $idUser)
+            ->value('id_teknisi');
+
+        // Ambil semua pesanan yang statusnya selesai atau batal
+        $riwayat = DB::table('pemesanan')
+            ->join('user', 'pemesanan.id_pelanggan', '=', 'user.id_user')
+            ->leftJoin('alamat', 'pemesanan.id_alamat', '=', 'alamat.id_alamat')
+            ->leftJoin('keahlian', 'pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
+
+            ->where('pemesanan.id_teknisi', $idTeknisi)
+            ->whereIn('pemesanan.status_pekerjaan', ['selesai', 'batal'])
+
+            ->select(
+                'pemesanan.id_pemesanan as id',
+                'pemesanan.kode_pemesanan',
+                'user.nama as nama_pelanggan',
+                'keahlian.nama_keahlian',
+                'pemesanan.keluhan',
+
+                'pemesanan.status_pekerjaan',
+                'pemesanan.harga',
+
+                'alamat.alamat_lengkap',
+                'alamat.latitude',
+                'alamat.longitude',
+
+                'pemesanan.tanggal_booking',
+                'pemesanan.jam_booking',
+                'pemesanan.created_at'
+            )
+            ->orderBy('pemesanan.created_at', 'DESC')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'total' => $riwayat->count(),
+            'data' => $riwayat
+        ]);
+    }
+
 }

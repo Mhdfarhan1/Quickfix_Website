@@ -69,32 +69,54 @@ class DatabaseSeeder extends Seeder
         // ========================
         // 3️⃣ KATEGORI & KEAHLIAN
         // ========================
-        $idKategori = DB::table('kategori')->insertGetId([
-            'nama_kategori' => 'Elektronik Rumah Tangga',
-            'icon' => 'icon-elektronik.png',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
 
-        $idKeahlian = DB::table('keahlian')->insertGetId([
-            'id_kategori' => $idKategori,
-            'nama_keahlian' => 'Servis AC',
-            'deskripsi' => 'Perawatan dan perbaikan AC rumah tangga.',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $categories = [
+            'Renovasi' => ['Cat Dinding', 'Perbaikan Atap', 'Pasang Keramik', 'Instalasi Pipa'],
+            'Elektronik' => ['Servis AC', 'Servis Kulkas', 'Servis TV', 'Mesin Cuci'],
+            'Teknisi Mobil' => ['Ganti Oli Mobil', 'Tune Up Mobil', 'Servis Rem Mobil', 'Ganti Aki Mobil'],
+            'Teknisi Motor' => ['Servis Ringan Motor', 'Ganti Ban Motor', 'Ganti Oli Motor', 'Servis CVT'],
+        ];
+
+        $keahlianIds = [];
+
+        foreach ($categories as $catName => $skills) {
+            $idKategori = DB::table('kategori')->insertGetId([
+                'nama_kategori' => $catName,
+                'icon' => 'icon-' . Str::slug($catName) . '.png',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            foreach ($skills as $skillName) {
+                $idKeahlian = DB::table('keahlian')->insertGetId([
+                    'id_kategori' => $idKategori,
+                    'nama_keahlian' => $skillName,
+                    'deskripsi' => 'Layanan profesional untuk ' . $skillName,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $keahlianIds[] = $idKeahlian;
+            }
+        }
 
         // ========================
         // 4️⃣ KEAHLIAN TEKNISI
         // ========================
-        DB::table('keahlian_teknisi')->insert([
-            'id_teknisi' => $idTeknisi,
-            'id_keahlian' => $idKeahlian,
-            'harga_min' => 150000,
-            'harga_max' => 500000,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+
+        // Assign random skills to the default technician
+        $randomSkills = array_rand(array_flip($keahlianIds), 4); // Pick 4 random skill IDs
+
+        foreach ($randomSkills as $kId) {
+            DB::table('keahlian_teknisi')->insert([
+                'id_teknisi' => $idTeknisi,
+                'id_keahlian' => $kId,
+                'harga_min' => rand(50000, 100000),
+                'harga_max' => rand(150000, 500000),
+                'gambar_layanan' => null, // Let it use default or we can add dummy images later
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         // ========================
         // 5️⃣ ALAMAT
@@ -146,7 +168,7 @@ class DatabaseSeeder extends Seeder
                 'id_pelanggan' => $idPelanggan,
                 'id_teknisi' => $idTeknisi,
                 'id_keahlian' => $idKeahlian,
-                'id_alamat' => rand(0,1) == 1 ? $idAlamatRumah : $idAlamatKantor,
+                'id_alamat' => rand(0, 1) == 1 ? $idAlamatRumah : $idAlamatKantor,
                 'tanggal_booking' => now()->addDays(rand(0, 5)),
                 'keluhan' => 'AC tidak dingin, mohon dicek ulang.',
                 'harga' => rand(150000, 500000),

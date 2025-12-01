@@ -1,0 +1,94 @@
+
+
+<?php $__env->startSection('content'); ?>
+<div class="p-6">
+    <h1 class="text-2xl font-bold mb-4">Daftar Pengguna</h1>
+
+    <?php if(session('success')): ?>
+        <div class="bg-green-100 text-green-700 px-4 py-2 rounded mb-4">
+            <?php echo e(session('success')); ?>
+
+        </div>
+    <?php endif; ?>
+
+    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600">
+                <thead class="bg-gray-50 border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500 font-bold">
+                    <tr>
+                        <th class="px-6 py-4">No</th>
+                        <th class="px-6 py-4">Nama & Email</th>
+                        <th class="px-6 py-4">Kontak</th>
+                        <th class="px-6 py-4 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <?php $__empty_1 = true; $__currentLoopData = $users; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $user): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <tr class="hover:bg-blue-50/50 transition duration-200 ease-in-out">
+                            <td class="px-6 py-4 font-medium text-gray-900"><?php echo e($index + 1); ?></td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="text-base font-semibold text-gray-800"><?php echo e($user->nama); ?></span>
+                                    <span class="text-xs text-gray-500"><?php echo e($user->email); ?></span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 font-medium text-gray-700"><?php echo e($user->no_hp ?? '-'); ?></td>
+                            <td class="px-6 py-4 text-center">
+                                <!-- Form DELETE untuk pengguna -->
+                                <form action="<?php echo e(route('admin.user.destroy', $user->id_user)); ?>" method="POST" class="inline">
+                                    <?php echo csrf_field(); ?>
+                                    <?php echo method_field('DELETE'); ?>
+                                    <button type="button" onclick="confirmDelete(this)" 
+                                            class="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-4 py-2 text-xs font-medium text-white shadow-sm hover:from-red-600 hover:to-red-700 hover:shadow-md transition-all duration-200 ml-2">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1 1 0 00-1-1m-4 0h4"></path>
+                                        </svg>
+                                        Hapus
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                        <tr>
+                            <td colspan="4" class="py-8 text-center text-gray-500 bg-gray-50">
+                                <div class="flex flex-col items-center justify-center">
+                                    <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M7 10a2 2 0 11-4 0 2 2 0 014 0zM15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM17 20h5v-2a3 3 0 00-5.356-1.857M7 20H2v-2a3 3 0 015.356-1.857"></path>
+                                    </svg>
+                                    <p class="text-base font-semibold">Belum ada data pengguna</p>
+                                    <p class="text-sm text-gray-400">Data pengguna akan muncul di sini.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- SweetAlert -->
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmDelete(el) {
+    Swal.fire({
+        title: 'Hapus Pengguna?',
+        text: "Data pengguna akan dihapus permanen!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            el.closest('form').submit(); // submit form DELETE
+        }
+    });
+}
+</script>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\Quickfix_Website\resources\views/admin/user/index.blade.php ENDPATH**/ ?>

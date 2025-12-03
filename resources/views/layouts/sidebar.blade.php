@@ -38,11 +38,6 @@
 
             <!-- Dropdown fitur -->
             <div x-show="open" x-transition class="mt-1 space-y-1 pl-7">
-                <a href="#akun-admin"
-                    class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300">
-                    <i class="fas fa-user-shield w-5"></i>
-                    <span>Akun Admin</span>
-                </a>
                 <a href="{{ route('admin.teknisi.index') }}"
                     class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
                     {{ request()->routeIs('admin.teknisi.index') ? 'bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">

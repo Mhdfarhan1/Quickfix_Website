@@ -19,7 +19,9 @@ use App\Http\Controllers\Api\LokasiController;
 use App\Http\Controllers\Api\TrackingController;
 use App\Http\Controllers\Api\AuthOtpController;
 use App\Http\Controllers\Api\VerifikasiTeknisiController;
-use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\ChatController;use App\Http\Controllers\Teknisi\KeahlianTeknisiController;
+use App\Http\Controllers\KeahlianController;
+
 
 
 // ===============================
@@ -260,3 +262,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 });
+
+// ===============================
+// 🔹 Tambah Layanan Teknisi
+// ===============================
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/teknisi/keahlian', [KeahlianTeknisiController::class, 'store']);
+    Route::get('/teknisi/keahlian', [KeahlianTeknisiController::class, 'getByTeknisi']);
+    Route::put('/teknisi/keahlian/{id}', [KeahlianTeknisiController::class, 'update']);
+    Route::delete('/teknisi/keahlian/{id}', [KeahlianTeknisiController::class, 'destroy']);
+});
+
+Route::get('/keahlian', [KeahlianController::class, 'index']); // public / authenticated sesuaikan kebutuhan
+
+Route::get('/kategori', [App\Http\Controllers\KategoriController::class, 'index']);
+Route::get('/keahlian', [App\Http\Controllers\KeahlianController::class, 'index']); // accepts optional ?kategori_id=

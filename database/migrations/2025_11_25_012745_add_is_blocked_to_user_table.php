@@ -9,14 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('user', function (Blueprint $table) {
-            $table->boolean('is_blocked')->default(false)->index();
+            if (!Schema::hasColumn('user', 'is_blocked')) {
+                $table->boolean('is_blocked')->default(false)->index();
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('user', function (Blueprint $table) {
-            $table->dropColumn('is_blocked');
+            if (Schema::hasColumn('user', 'is_blocked')) {
+                $table->dropColumn('is_blocked');
+            }
         });
     }
 };

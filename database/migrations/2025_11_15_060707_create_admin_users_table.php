@@ -21,6 +21,48 @@ return new class extends Migration
             $table->rememberToken(); // opsional tapi disarankan
             $table->timestamps();
         });
+
+        Schema::create('admin_logs', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('id_admin');
+            $table->string('aksi');
+            $table->text('keterangan')->nullable();
+            $table->timestamps();
+
+            $table->foreign('id_admin')
+                ->references('id_admin')
+                ->on('admin_users')
+                ->onDelete('cascade');
+        });
+
+        Schema::create('banners', function (Blueprint $table) {
+            $table->id();
+            $table->string('judul');
+            $table->string('gambar');
+            $table->string('link')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('faqs', function (Blueprint $table) {
+            $table->id();
+            $table->string('pertanyaan');
+            $table->text('jawaban');
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('notifikasi_admin', function (Blueprint $table) {
+            $table->id();
+            $table->string('judul');
+            $table->text('pesan');
+            $table->boolean('is_read')->default(false);
+            $table->timestamps();
+        });
+
+
+
+
     }
 
     /**
@@ -28,6 +70,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('notifikasi_admin');
+        Schema::dropIfExists('faqs');
+        Schema::dropIfExists('banners');
+        Schema::dropIfExists('admin_logs');
         Schema::dropIfExists('admin_users');
     }
 };

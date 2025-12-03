@@ -10,6 +10,7 @@ use App\Models\Pemesanan;
 use Illuminate\Validation\ValidationException;
 use Midtrans\Snap;
 use Midtrans\Config;
+use Illuminate\Support\Facades\Log;
 
 class PemesananController extends Controller
 {
@@ -45,6 +46,9 @@ class PemesananController extends Controller
                 'alamat.provinsi',
 
                 'bukti_pekerjaan.foto_bukti',
+
+                'pemesanan.payment_status',
+                'pemesanan.payment_type',
 
                 'teknisi_user.nama as nama_teknisi',
                 'teknisi_user.foto_profile as foto_teknisi' // ✅ AMBIL DARI USER
@@ -82,44 +86,65 @@ class PemesananController extends Controller
 
     public function getPemesananByUser(Request $request)
     {
-        $user = $request->user();
+        $idUser = $request->user()->id_user;
 
-        if (!$user) {
-            return response()->json(['status' => false, 'message' => 'Token tidak valid'], 401);
-        }
-
-        $query = DB::table('pemesanan')
-            ->join('user as pelanggan', 'pemesanan.id_pelanggan', '=', 'pelanggan.id_user')
-            ->join('teknisi', 'pemesanan.id_teknisi', '=', 'teknisi.id_teknisi')
-            ->join('keahlian', 'pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
+        $data = DB::table('pemesanan')
             ->select(
                 'pemesanan.id_pemesanan',
                 'pemesanan.kode_pemesanan',
+                'pemesanan.id_teknisi',
+
+                // pelanggan
                 'pelanggan.nama as nama_pelanggan',
+
+                // teknisi
+                'u_teknisi.nama as nama_teknisi',
+                'u_teknisi.foto_profile as foto_teknisi',
+
+                // keahlian
                 'keahlian.nama_keahlian',
+
+                // booking
                 'pemesanan.tanggal_booking',
+                'pemesanan.jam_booking',
+                'pemesanan.harga',
                 'pemesanan.keluhan',
-                'pemesanan.status_pekerjaan', // ✅ ubah
-                'pemesanan.harga'
-            );
 
-        if ($user->role === 'teknisi') {
-            $id_teknisi = DB::table('teknisi')->where('id_user', $user->id_user)->value('id_teknisi');
-            $query->where('pemesanan.id_teknisi', $id_teknisi);
-        } elseif ($user->role === 'pelanggan') {
-            $query->where('pemesanan.id_pelanggan', $user->id_user);
-        } else {
-            return response()->json(['status' => false, 'message' => 'Role tidak diizinkan'], 403);
-        }
+                // alamat dari tabel alamat
+                'alamat.alamat_lengkap',
+                'alamat.kota',
+                'alamat.provinsi',
 
-        $data = $query->orderByDesc('pemesanan.id_pemesanan')->limit(50)->get();
+                // status
+                'pemesanan.status_pekerjaan as status'
+            )
+            ->join('user as pelanggan', 'pemesanan.id_pelanggan', '=', 'pelanggan.id_user')
 
-        return response()->json([
-            'status' => true,
-            'count' => $data->count(),
-            'data' => $data,
-        ]);
+            // join teknisi + user teknisi
+            ->leftJoin('teknisi', 'pemesanan.id_teknisi', '=', 'teknisi.id_teknisi')
+            ->leftJoin('user as u_teknisi', 'teknisi.id_user', '=', 'u_teknisi.id_user')
+
+            // join keahlian
+            ->join('keahlian', 'pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
+
+            // 🔥 join tabel alamat (alamat user pelanggan)
+            ->leftJoin('alamat', function ($q) {
+                $q->on('pelanggan.id_user', '=', 'alamat.id_user')
+                ->where('alamat.is_default', 1);
+            })
+
+
+            ->where('pemesanan.id_pelanggan', $idUser)
+            ->orderBy('pemesanan.id_pemesanan', 'desc')
+            ->limit(50)
+            ->get();
+
+        return response()->json($data);
     }
+
+
+
+
 
     public function addPemesanan(Request $request)
     {
@@ -144,6 +169,14 @@ class PemesananController extends Controller
                 return response()->json(['status' => false, 'message' => 'Alamat belum dipilih'], 400);
             }
 
+            $fotoKeluhanPath = null;
+
+            if ($request->hasFile('foto_keluhan')) {
+                $fotoKeluhanPath = $request->file('foto_keluhan')
+                    ->store('foto_keluhan', 'public');
+            }
+
+
             $prefix = 'QFX-' . date('Y') . '-';
             $latest = Pemesanan::latest('id_pemesanan')->first();
             $nextNumber = $latest ? ((int) substr($latest->kode_pemesanan, -4)) + 1 : 1;
@@ -162,6 +195,13 @@ class PemesananController extends Controller
                 'harga' => $request->harga,
                 'payment_status' => 'pending',
             ]);
+
+            DB::table('foto_keluhan')->insert([
+                'id_pemesanan' => $pemesanan->id_pemesanan,
+                'foto_keluhan' => $fotoKeluhanPath,
+                'created_at' => now()
+            ]);
+
 
             Config::$serverKey = config('midtrans.server_key');
             Config::$isProduction = config('midtrans.is_production');

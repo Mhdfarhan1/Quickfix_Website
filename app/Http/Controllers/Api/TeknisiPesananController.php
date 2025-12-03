@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Pemesanan;
+use App\Services\Notify;
+
 
 class TeknisiPesananController extends Controller
 {
@@ -43,6 +45,7 @@ class TeknisiPesananController extends Controller
 
                 // pelanggan
                 'pelanggan.nama as nama_pelanggan',
+                'pelanggan.no_hp as no_hp',
 
                 // alamat
                 'alamat.alamat_lengkap',
@@ -103,6 +106,7 @@ class TeknisiPesananController extends Controller
             ->select(
                 'pemesanan.*',
                 'pelanggan.nama as nama_pelanggan',
+                'pelanggan.no_hp as no_hp',
                 'alamat.alamat_lengkap',
                 'alamat.kota',
                 'keahlian.nama_keahlian'
@@ -155,6 +159,7 @@ class TeknisiPesananController extends Controller
 
                 // pelanggan
                 'pelanggan.nama as nama_pelanggan',
+                'pelanggan.no_hp as no_hp',
 
                 // alamat pelanggan
                 'alamat.alamat_lengkap',
@@ -224,6 +229,12 @@ class TeknisiPesananController extends Controller
 
             if ($updated) {
                 $pemesanan = Pemesanan::find($id);
+                $pelangganId = DB::table('pemesanan')
+                        ->where('id_pemesanan', $id)
+                        ->value('id_pelanggan');
+                
+                $pemesanan = Pemesanan::find($id);
+                Notify::statusChanged($pemesanan->id_pelanggan, 'dijadwalkan');
 
                 \Log::info("DATA SETELAH UPDATE:", [
                     'data' => $pemesanan
@@ -323,6 +334,15 @@ class TeknisiPesananController extends Controller
             ]);
 
             if (!$updated) {
+
+                $pelangganId = DB::table('pemesanan')
+                        ->where('id_pemesanan', $id)
+                        ->value('id_pelanggan');
+                
+
+                Notify::statusChanged($pelangganId, 'menuju_lokasi');
+
+
                 \Log::warning("GAGAL UPDATE STATUS 'dijadwalkan' → 'menuju_lokasi'", [
                     'id_pemesanan' => $id,
                     'id_teknisi' => $id_teknisi,
@@ -344,6 +364,7 @@ class TeknisiPesananController extends Controller
                 ->select(
                     'pemesanan.*',
                     'pelanggan.nama as nama_pelanggan',
+                    'pelanggan.no_hp as no_hp',
                     'alamat.alamat_lengkap',
                     'alamat.kota',
                     'keahlian.nama_keahlian'
@@ -438,6 +459,9 @@ class TeknisiPesananController extends Controller
                 'id_pemesanan' => $id
             ]);
 
+            $pelangganId = $cek->id_pelanggan;
+            Notify::statusChanged($pelangganId, 'sedang_bekerja');
+
             return response()->json([
                 'status' => true,
                 'message' => 'Teknisi sudah sampai lokasi dan mulai bekerja'
@@ -525,11 +549,19 @@ class TeknisiPesananController extends Controller
                 'status_pekerjaan' => 'selesai',
                 'updated_at' => now()
             ]);
+        
+        $pelangganId = DB::table('pemesanan')
+            ->where('id_pemesanan', $id)
+            ->value('id_pelanggan');
+
+        Notify::statusChanged($pelangganId, 'selesai');
+        Notify::requestRating($pelangganId);
 
         return response()->json([
             'status' => true,
             'message' => 'Pekerjaan telah diselesaikan'
         ]);
+
     }
 
 }

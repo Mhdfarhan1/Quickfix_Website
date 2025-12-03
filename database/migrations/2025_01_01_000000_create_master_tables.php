@@ -106,11 +106,30 @@ return new class extends Migration {
                 ->on('keahlian')
                 ->onDelete('cascade');
         });
+
+        Schema::create('sertifikat_teknisi', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('id_teknisi');
+            $table->string('nama_sertifikat');
+            $table->string('file_sertifikat');
+            $table->boolean('is_verified')->default(false);
+            $table->timestamps();
+
+            $table->foreign('id_teknisi')
+                ->references('id_teknisi')
+                ->on('teknisi')
+                ->onDelete('cascade');
+        });
+
+
     }
+
+    
 
     public function down(): void
     {
         Schema::dropIfExists('keahlian_teknisi');
+        Schema::dropIfExists('sertifikat_teknisi');
         Schema::dropIfExists('alamat');
         Schema::dropIfExists('keahlian');
         Schema::dropIfExists('kategori');

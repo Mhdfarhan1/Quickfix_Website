@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
+use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TeknisiController;
 use App\Http\Controllers\Api\PemesananController;
@@ -17,7 +18,8 @@ use App\Http\Controllers\Api\TeknisiPesananController;
 use App\Http\Controllers\Api\LokasiController;
 use App\Http\Controllers\Api\TrackingController;
 use App\Http\Controllers\Api\AuthOtpController;
-
+use App\Http\Controllers\Api\VerifikasiTeknisiController;
+use App\Http\Controllers\Api\ChatController;
 
 
 // ===============================
@@ -67,6 +69,8 @@ Route::get('/layanan-detail', [TeknisiController::class, 'getLayananDetail']);
 // ===============================
 Route::get('/get_pemesanan', [PemesananController::class, 'getPemesanan']);
 Route::middleware('auth:sanctum')->get('/get_pemesanan_by_user', [PemesananController::class, 'getPemesananByUser']);
+Route::middleware('auth:sanctum')->get('/pemesanan/{id}', [PemesananController::class, 'getPemesananById']);
+Route::middleware('auth:sanctum')->post('/cancel_pemesanan', [PemesananController::class, 'cancelPemesanan']);
 Route::post('/add_pemesanan', [PemesananController::class, 'addPemesanan']);
 
 // ===============================
@@ -136,8 +140,6 @@ Route::post('/restore', function (Request $request) {
 });
 
 
-Route::post('/selesai', [TaskController::class, 'selesaikanTugas']);
-
 // ===============================
 // 🔹 Alamat
 // ===============================
@@ -182,6 +184,22 @@ Route::get('/test-db', function () {
     return DB::table('pemesanan')->limit(5)->get();
 });
 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/chat/start', [\App\Http\Controllers\Api\ChatController::class,'start']);
+    Route::get('/chat/list', [\App\Http\Controllers\Api\ChatController::class,'list']);
+    Route::get('/chat/{id_chat}/messages', [\App\Http\Controllers\Api\ChatController::class,'messages']);
+    Route::post('/chat/send', [\App\Http\Controllers\Api\ChatController::class,'send']);
+    Route::post('/chat/{id_chat}/read', [\App\Http\Controllers\Api\ChatController::class,'markRead']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::get('/notifications', [NotifikasiController::class, 'index']);
+
+    Route::post('/notifications', [NotifikasiController::class, 'create']);
+
+    Route::post('/notifications/{id}/read', [NotifikasiController::class, 'markRead']);
+});
 
 // ===============================
 // 🔹 tEKNISI
@@ -217,3 +235,28 @@ Route::get('/test', function(){
 });
 
 Route::middleware('auth:sanctum')->get('/teknisi/riwayat', [TaskController::class, 'getRiwayatTeknisi']);
+
+Route::get('/user/{id}/phone', [ChatController::class, 'getPhone']);
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/teknisi/verifikasi/status', [VerifikasiTeknisiController::class, 'status']);
+});
+Route::middleware('auth:sanctum')->post('/verifikasi-teknisi', [VerifikasiTeknisiController::class, 'store']);
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post('/chat/start', [ChatController::class, 'start']);
+
+    Route::get('/chat/{id}/detail', [ChatController::class, 'detail']);
+
+    Route::get('/user/{id}/phone', [ChatController::class, 'getPhone']);
+
+    Route::get('/chat/{id}/messages', [ChatController::class, 'messages']);
+
+    Route::post('/chat/send', [ChatController::class, 'send']);
+
+    Route::delete('/chat/message/{id}', [ChatController::class, 'destroy']);
+
+
+});

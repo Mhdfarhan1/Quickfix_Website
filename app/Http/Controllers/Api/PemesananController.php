@@ -94,54 +94,52 @@ class PemesananController extends Controller
                 'pemesanan.kode_pemesanan',
                 'pemesanan.id_teknisi',
 
-                // pelanggan
                 'pelanggan.nama as nama_pelanggan',
 
-                // teknisi
                 'u_teknisi.nama as nama_teknisi',
                 'u_teknisi.foto_profile as foto_teknisi',
 
-                // keahlian
                 'keahlian.nama_keahlian',
 
-                // booking
                 'pemesanan.tanggal_booking',
                 'pemesanan.jam_booking',
                 'pemesanan.harga',
                 'pemesanan.keluhan',
 
-                // alamat dari tabel alamat
                 'alamat.alamat_lengkap',
                 'alamat.kota',
                 'alamat.provinsi',
 
-                // status
+                'bukti_pekerjaan.foto_bukti',
+
                 'pemesanan.status_pekerjaan as status'
             )
             ->join('user as pelanggan', 'pemesanan.id_pelanggan', '=', 'pelanggan.id_user')
-
-            // join teknisi + user teknisi
             ->leftJoin('teknisi', 'pemesanan.id_teknisi', '=', 'teknisi.id_teknisi')
             ->leftJoin('user as u_teknisi', 'teknisi.id_user', '=', 'u_teknisi.id_user')
-
-            // join keahlian
             ->join('keahlian', 'pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
-
-            // 🔥 join tabel alamat (alamat user pelanggan)
             ->leftJoin('alamat', function ($q) {
                 $q->on('pelanggan.id_user', '=', 'alamat.id_user')
-                ->where('alamat.is_default', 1);
+                    ->where('alamat.is_default', 1);
             })
-
-
+            ->leftJoin('bukti_pekerjaan', 'pemesanan.id_pemesanan', '=', 'bukti_pekerjaan.id_pemesanan')
             ->where('pemesanan.id_pelanggan', $idUser)
             ->orderBy('pemesanan.id_pemesanan', 'desc')
             ->limit(50)
             ->get();
 
+        foreach ($data as $item) {
+            $item->foto_teknisi_url = $item->foto_teknisi
+                ? url('storage/foto/foto_teknisi/' . $item->foto_teknisi)
+                : url('storage/default.png');
+
+            $item->foto_bukti_url = $item->foto_bukti
+                ? url('storage/foto/bukti/' . $item->foto_bukti)
+                : "";
+        }
+
         return response()->json($data);
     }
-
 
 
 

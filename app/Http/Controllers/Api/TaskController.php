@@ -85,21 +85,26 @@ class TaskController extends Controller
         // Ambil semua pesanan yang statusnya selesai atau batal
         $riwayat = DB::table('pemesanan')
             ->join('user', 'pemesanan.id_pelanggan', '=', 'user.id_user')
-
             ->leftJoin('alamat', 'pemesanan.id_alamat', '=', 'alamat.id_alamat')
             ->leftJoin('keahlian', 'pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
+
+            // JOIN chat berdasarkan id_pelanggan + id_teknisi
+            ->leftJoin('chats', function($join) use ($idTeknisi) {
+                $join->on('chats.id_user', '=', 'pemesanan.id_pelanggan')
+                    ->where('chats.id_teknisi', '=', $idTeknisi);
+            })
 
             ->where('pemesanan.id_teknisi', $idTeknisi)
             ->whereIn('pemesanan.status_pekerjaan', ['selesai', 'batal'])
 
             ->select(
                 'pemesanan.id_pemesanan as id',
+                'pemesanan.id_teknisi',
                 'pemesanan.kode_pemesanan',
                 'user.nama as nama_pelanggan',
                 'keahlian.nama_keahlian',
                 'pemesanan.keluhan',
                 'user.no_hp as no_hp_pelanggan',
-
 
                 'pemesanan.status_pekerjaan',
                 'pemesanan.harga',
@@ -107,14 +112,17 @@ class TaskController extends Controller
                 'alamat.alamat_lengkap',
                 'alamat.latitude',
                 'alamat.longitude',
-                
 
                 'pemesanan.tanggal_booking',
                 'pemesanan.jam_booking',
-                'pemesanan.created_at'
+                'pemesanan.created_at',
+
+                // Tambahkan field ini
+                'chats.id_chat'
             )
             ->orderBy('pemesanan.created_at', 'DESC')
             ->get();
+
 
         return response()->json([
             'status' => true,

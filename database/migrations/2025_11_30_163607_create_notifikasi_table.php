@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('notifikasi', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('id_user');
             $table->string('judul');
             $table->string('pesan');
             $table->boolean('is_read')->default(false);

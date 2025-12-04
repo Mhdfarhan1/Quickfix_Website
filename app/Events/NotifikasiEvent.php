@@ -17,17 +17,16 @@ class NotificationEvent implements ShouldBroadcast
         $this->userId = $userId;
         $this->judul = $judul;
         $this->pesan = $pesan;
-        $this->tipe = $tipe;
+        $this->tipe  = $tipe;
     }
 
     public function broadcastOn()
     {
-        return new PrivateChannel("user.{$this->userId}");
+        return new PrivateChannel("notifikasi.{$this->userId}");
     }
 
     public function broadcastAs()
     {
-        return 'new-notification';
+        return 'notif-baru';
     }
 }
-    

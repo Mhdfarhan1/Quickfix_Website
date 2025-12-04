@@ -169,20 +169,8 @@ return new class extends Migration {
          * =======================
          * 7. NOTIFIKASI
          * =======================
-         */
-        Schema::create('notifikasi', function (Blueprint $table) {
-            $table->id('id_notifikasi');
-            $table->unsignedBigInteger('id_user');
 
-            $table->string('judul', 150);
-            $table->text('pesan');
-            $table->boolean('is_read')->default(false);
-            $table->timestamps();
-
-            $table->foreign('id_user')->references('id_user')->on('user')->onDelete('cascade');
-        });
-
-        /**
+        
          * =======================
          * 8. ULASAN
          * =======================
@@ -212,7 +200,6 @@ return new class extends Migration {
         Schema::dropIfExists('pembayaran');
         Schema::dropIfExists('bukti_pekerjaan');
         Schema::dropIfExists('foto_keluhan');
-        Schema::dropIfExists('notifikasi');
         Schema::dropIfExists('pemesanan');
     }
 };

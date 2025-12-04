@@ -10,9 +10,10 @@ class Notify {
     public static function send($userId, $title, $message){
         
         Notifikasi::create([
-            'user_id' => $userId,
+            'id_user' => $userId,   // ⬅ FIX DI SINI
             'judul' => $title,
-            'pesan' => $message
+            'pesan' => $message,
+            'tipe' => 'pemberitahuan' // boleh ditambah jika kamu punya kolom tipe
         ]);
 
         $pusher = new Pusher(
@@ -46,14 +47,14 @@ class Notify {
             'selesai'         => ["Pekerjaan Selesai", "Pekerjaan selesai! Silahkan berikan ulasan."],
         ];
 
-        if(isset($map[$status])){
+        if (isset($map[$status])) {
             self::send($userId, $map[$status][0], $map[$status][1]);
         }
     }
 
-
     public static function requestRating($userId){
-        self::send($userId,
+        self::send(
+            $userId,
             "Beri Ulasan",
             "Pekerjaan selesai! Silahkan berikan ulasan."
         );

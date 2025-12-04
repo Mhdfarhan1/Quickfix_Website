@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\LokasiController;
 use App\Http\Controllers\Api\TrackingController;
 use App\Http\Controllers\Api\AuthOtpController;
 use App\Http\Controllers\Api\VerifikasiTeknisiController;
+use App\Http\Controllers\Api\UlasanController;
 use App\Http\Controllers\Api\ChatController;use App\Http\Controllers\Teknisi\KeahlianTeknisiController;
 use App\Http\Controllers\KeahlianController;
 
@@ -262,6 +263,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 });
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/ulasan', [UlasanController::class, 'create']);
+    Route::get('/teknisi/{id}/ulasan', [UlasanController::class, 'getUlasanTeknisi']);
+    Route::get('/pemesanan/{id}/ulasan', [UlasanController::class, 'cekUlasanPemesanan']);
+
+});
+
+
+
+
 
 // ===============================
 // 🔹 Tambah Layanan Teknisi

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Notifikasi;
 use Illuminate\Http\Request;
-use App\Events\NotifikasiEvent;
+use App\Events\NotificationEvent;
 
 class NotifikasiController extends Controller
 {
@@ -13,7 +13,7 @@ class NotifikasiController extends Controller
     {
         $userId = $request->user()->id_user;
 
-        $data = Notifikasi::where('user_id', $userId)
+        $data = Notifikasi::where('id_user', $userId)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -28,34 +28,39 @@ class NotifikasiController extends Controller
     public function markRead($id, Request $request)
     {
         $notif = Notifikasi::where('id', $id)
-            ->where('user_id', $request->user()->id_user)
+            ->where('id_user', $request->user()->id_user)
             ->first();
-
 
         if (!$notif) {
             return response()->json(['status' => false, 'message' => 'Notifikasi tidak ditemukan'], 404);
         }
 
-        $notif->is_read = true;
+        $notif->is_read = 1;
         $notif->save();
 
         return response()->json(['status' => true, 'message' => 'Notifikasi dibaca']);
     }
 
-    // POST /notifications (untuk membuat notifikasi baru)
+
+    // POST /notifications
     public function create(Request $request)
     {
         $data = $request->validate([
-            'user_id' => 'required|integer',
-            'judul' => 'required|string',
-            'pesan' => 'required|string',
-            'tipe' => 'required|string',
+            'id_user' => 'required|integer',
+            'judul'   => 'required|string',
+            'pesan'   => 'required|string',
+            'tipe'    => 'required|string',
         ]);
 
         $notif = Notifikasi::create($data);
 
-        // 🔥 BROADCAST REALTIME
-        broadcast(new NotifikasiEvent($notif))->toOthers();
+        // PUSHER
+        broadcast(new NotificationEvent(
+            $notif->id_user,
+            $notif->judul,
+            $notif->pesan,
+            $notif->tipe
+        ))->toOthers();
 
         return response()->json([
             'status' => true,

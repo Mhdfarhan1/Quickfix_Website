@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\TeknisiController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\AdminProfileController; // ⬅️ TAMBAHAN
 
 // Halaman landing
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -29,6 +30,22 @@ Route::middleware(['admin.auth'])->prefix('admin')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->name('admin.dashboard');
 
+    // ====== ROUTE PROFIL ADMIN ======
+    Route::get('profile', [AdminProfileController::class, 'show'])
+        ->name('admin.profile.show');
+
+    Route::get('profile/edit', [AdminProfileController::class, 'edit'])
+        ->name('admin.profile.edit');
+
+    // Update profil (nama, email, foto)
+    Route::match(['post', 'put'], 'profile', [AdminProfileController::class, 'update'])
+        ->name('admin.profile.update');
+
+    // Update password
+    Route::match(['post', 'put'], 'profile/password', [AdminProfileController::class, 'updatePassword'])
+        ->name('admin.profile.password.update');
+    // =================================
+
     // Route Teknisi
     Route::get('teknisi', [TeknisiController::class, 'index'])
         ->name('admin.teknisi.index');
@@ -43,4 +60,3 @@ Route::middleware(['admin.auth'])->prefix('admin')->group(function () {
     Route::delete('user/delete/{id}', [UserController::class, 'destroy'])
         ->name('admin.user.destroy');
 });
-

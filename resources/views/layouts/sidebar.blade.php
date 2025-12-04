@@ -76,6 +76,14 @@
             <i class="fas fa-box-open w-5"></i>
             <span>Pesanan Selesai</span>
         </a>
+        <a href="{{ route('admin.banner.index') }}"
+            class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300">
+
+            <i class="fas fa-image w-5"></i> {{-- Ikon untuk banner / promosi --}}
+
+            <span>Upload Banner Promosi</span>
+        </a>
+
     </nav>
 </aside>
 

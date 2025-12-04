@@ -1,27 +1,33 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Response;
-use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\TeknisiController;
-use App\Http\Controllers\Api\PemesananController;
-use App\Http\Controllers\Api\ProfileController;
-use App\Http\Controllers\Api\BuktiController;
+use App\Http\Controllers\Api\ChatController;
 use App\Http\Controllers\Api\TaskController;
-use App\Http\Controllers\Api\AlamatController;
-use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\Api\PasswordResetController;
-use App\Http\Controllers\Api\KeranjangController;
-use App\Http\Controllers\Api\TeknisiPesananController;
-use App\Http\Controllers\Api\LokasiController;
-use App\Http\Controllers\Api\TrackingController;
-use App\Http\Controllers\Api\AuthOtpController;
-use App\Http\Controllers\Api\VerifikasiTeknisiController;
-use App\Http\Controllers\Api\UlasanController;
-use App\Http\Controllers\Api\ChatController;use App\Http\Controllers\Teknisi\KeahlianTeknisiController;
 use App\Http\Controllers\KeahlianController;
+use App\Http\Controllers\Api\BuktiController;
+use App\Http\Controllers\Api\AlamatController;
+use App\Http\Controllers\Api\BannerController;
+use App\Http\Controllers\Api\LokasiController;
+use App\Http\Controllers\Api\UlasanController;
+use App\Http\Controllers\NotifikasiController;
+use App\Http\Controllers\Api\AuthOtpController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\TeknisiController;
+use App\Http\Controllers\Api\TrackingController;
+use App\Http\Controllers\Api\KeranjangController;
+use App\Http\Controllers\Api\PemesananController;
+use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\TeknisiPesananController;
+use App\Http\Controllers\Api\VerifikasiTeknisiController;
+use App\Http\Controllers\Teknisi\KeahlianTeknisiController;
+
 
 
 
@@ -124,7 +130,7 @@ Route::get('/bukti/recent', [BuktiController::class, 'getRecent']);
 // ===============================
 // 🔹 BackUp adn Restore
 // ===============================
-Route::get('/backup', function() {
+Route::get('/backup', function () {
     Artisan::call('backup:run');
     return response()->json(['message' => 'Backup berhasil dijalankan']);
 });
@@ -187,12 +193,22 @@ Route::get('/test-db', function () {
     return DB::table('pemesanan')->limit(5)->get();
 });
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/chat/start', [\App\Http\Controllers\Api\ChatController::class,'start']);
-    Route::get('/chat/list', [\App\Http\Controllers\Api\ChatController::class,'list']);
-    Route::get('/chat/{id_chat}/messages', [\App\Http\Controllers\Api\ChatController::class,'messages']);
-    Route::post('/chat/send', [\App\Http\Controllers\Api\ChatController::class,'send']);
-    Route::post('/chat/{id_chat}/read', [\App\Http\Controllers\Api\ChatController::class,'markRead']);
+Route::middleware('auth:sanctum')->prefix('chat')->group(function () {
+
+    // Start chat baru
+    Route::post('/start', [ChatController::class, 'start'])->name('chat.start');
+
+    // List semua chat user
+    Route::get('/', [ChatController::class, 'index'])->name('chat.index');
+
+    // Ambil pesan satu chat
+    Route::get('/{chat_id}/messages', [ChatController::class, 'messages'])->name('chat.messages');
+
+    // Kirim pesan ke chat
+    Route::post('/{chat_id}/send', [ChatController::class, 'send'])->name('chat.send');
+
+    // Tandai pesan sudah dibaca
+    Route::put('/{chat_id}/read', [ChatController::class, 'markRead'])->name('chat.read');
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -204,6 +220,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications/{id}/read', [NotifikasiController::class, 'markRead']);
 });
 
+
+//benner
+Route::get('/banners', [BannerController::class, 'index']);
+
+
+
 // ===============================
 // 🔹 tEKNISI
 // ===============================
@@ -211,7 +233,6 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/pemesanan/{id}/terima', [App\Http\Controllers\Api\TeknisiPesananController::class, 'terimaPekerjaan']);
     Route::post('/teknisi/pemesanan/{id}/mulai', [TeknisiPesananController::class, 'mulaiKerja']);
-
 });
 Route::middleware('auth:sanctum')->prefix('teknisi')->group(function () {
     Route::get('/pesanan/baru', [TeknisiPesananController::class, 'pesananBaru']);
@@ -233,7 +254,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/pemesanan/{id}/selesaikan', [TeknisiPesananController::class, 'selesaikanPekerjaan']);
 });
 
-Route::get('/test', function(){
+Route::get('/test', function () {
     return response()->json(["status" => "API hidup"]);
 });
 
@@ -260,14 +281,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/chat/send', [ChatController::class, 'send']);
 
     Route::delete('/chat/message/{id}', [ChatController::class, 'destroy']);
-
-
 });
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ulasan', [UlasanController::class, 'create']);
     Route::get('/teknisi/{id}/ulasan', [UlasanController::class, 'getUlasanTeknisi']);
     Route::get('/pemesanan/{id}/ulasan', [UlasanController::class, 'cekUlasanPemesanan']);
-
 });
 
 

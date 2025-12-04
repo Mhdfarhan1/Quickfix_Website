@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\TeknisiController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AdminProfileController; // ⬅️ TAMBAHAN
@@ -59,4 +60,25 @@ Route::middleware(['admin.auth'])->prefix('admin')->group(function () {
         ->name('admin.user.index');
     Route::delete('user/delete/{id}', [UserController::class, 'destroy'])
         ->name('admin.user.destroy');
+
+    // ==========================
+    // ROUTE BANNER PROMOSI
+    // ==========================
+    Route::get('banner', [BannerController::class, 'index'])
+        ->name('admin.banner.index');
+
+    Route::post('banner', [BannerController::class, 'store'])
+        ->name('admin.banner.store');
+
+    // Update banner (gunakan method PUT)
+    Route::put('banner/{banner}', [BannerController::class, 'update'])
+        ->name('admin.banner.update');
+
+    // Hapus banner
+    Route::delete('banner/{banner}', [BannerController::class, 'destroy'])
+        ->name('admin.banner.destroy');
+
+    // Aktif / Nonaktifkan banner
+    Route::patch('banner/{banner}/toggle', [BannerController::class, 'toggle'])
+        ->name('admin.banner.toggle');
 });

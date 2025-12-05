@@ -8,11 +8,32 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    // Tampilkan semua pelanggan
-    public function index()
+    // Tampilkan semua pelanggan + search + entries + pagination
+    public function index(Request $request)
     {
-        $users = User::where('role', 'pelanggan')->get(); // hanya pelanggan
-        return view('admin.user.index', compact('users'));
+        // Jumlah data per halaman (entries)
+        $entries = $request->input('entries', 10); // default 10
+
+        // Keyword pencarian
+        $search = $request->input('search');
+
+        $query = User::where('role', 'pelanggan'); // hanya pelanggan
+
+        // Jika ada keyword search
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%')
+                    ->orWhere('no_hp', 'like', '%' . $search . '%');
+            });
+        }
+
+        // Pagination + bawa query string (entries, search) ke link berikutnya
+        $users = $query->orderBy('nama')
+            ->paginate($entries)
+            ->appends($request->except('page'));
+
+        return view('admin.user.index', compact('users', 'entries', 'search'));
     }
 
     // Hapus akun pelanggan

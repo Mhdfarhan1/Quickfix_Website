@@ -1,53 +1,60 @@
-<!-- Desktop Sidebar -->
+
 <aside class="flex-col bg-white text-gray-800 shadow-2xl w-64 md:flex hidden sidebar-animate">
+
     <!-- Logo -->
     <div class="flex items-center justify-center h-20 border-b border-gray-200 bg-white">
         <div class="w-16 h-16 rounded-xl flex items-center justify-center ring-4 ring-white shadow-lg">
-            <img src="{{ asset('assets/img/Logo_quickfix.png') }}" alt="Logo"
-                class="w-14 h-14 object-contain rounded-full">
+            <img src="{{ asset('assets/img/Logo_quickfix.png') }}" class="w-14 h-14 rounded-full object-contain">
         </div>
         <span
-            class="ml-3 text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">QuickFix</span>
+            class="ml-3 text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+            QuickFix
+        </span>
     </div>
 
     <!-- Navigation -->
     <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
 
-        <!-- Dashboard -->
+        {{-- Dashboard --}}
         <a href="{{ route('admin.dashboard') }}"
             class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
-           {{ request()->routeIs('admin.dashboard') ? 'active bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+            {{ request()->routeIs('admin.dashboard') ? 'bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-tachometer-alt w-5"></i>
             <span>Dashboard</span>
         </a>
 
-        <!-- Pembatas dengan teks -->
+        {{-- Divider --}}
         <div class="px-4 pt-4 pb-2 flex items-center">
-            <span class="flex-shrink-0 text-xs font-semibold text-gray-400 uppercase pr-3">Manajemen</span>
+            <span class="text-xs font-semibold text-gray-400 uppercase pr-3">Manajemen</span>
             <div class="flex-grow border-t border-gray-200"></div>
         </div>
 
-        <!-- Dropdown Manajemen -->
-        <div x-data="{ open: false }" class="px-0">
-            <button @click="open = !open"
-                class="flex items-center gap-3 w-full rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 transition-all duration-300">
+        {{-- Dropdown Manajemen --}}
+        <div
+            x-data="{ open: {{ request()->routeIs('admin.teknisi.*') || request()->routeIs('admin.user.*') ? 'true' : 'false' }} }">
+
+            <button @click="open = !open" class="flex items-center gap-3 w-full rounded-xl px-4 py-3 transition-all
+                {{ request()->routeIs('admin.teknisi.*') || request()->routeIs('admin.user.*')
+    ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
                 <i class="fas fa-cogs w-5"></i>
                 <span>Manajemen</span>
                 <i :class="open ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="ml-auto w-3"></i>
             </button>
 
-            <!-- Dropdown fitur -->
             <div x-show="open" x-transition class="mt-1 space-y-1 pl-7">
+
+                {{-- Akun Teknisi --}}
                 <a href="{{ route('admin.teknisi.index') }}"
                     class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
-                    {{ request()->routeIs('admin.teknisi.index') ? 'bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+                    {{ request()->routeIs('admin.teknisi.*') ? 'bg-blue-100/50 text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
                     <i class="fas fa-user-cog w-5"></i>
                     <span>Akun Teknisi</span>
                 </a>
 
+                {{-- Pengguna --}}
                 <a href="{{ route('admin.user.index') }}"
-                    class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl
-                    {{ request()->routeIs('admin.user.index') ? 'text-blue-600 bg-blue-50 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }} transition-all duration-300">
+                    class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+                    {{ request()->routeIs('admin.user.*') ? 'bg-blue-100/50 text-blue-600 font-semibold' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
                     <i class="fas fa-users w-5"></i>
                     <span>Pengguna</span>
                 </a>
@@ -55,37 +62,46 @@
             </div>
         </div>
 
-        <!-- Lainnya -->
+        {{-- Divider Lainnya --}}
         <div class="px-4 pt-4 pb-2 flex items-center">
-            <span class="flex-shrink-0 text-xs font-semibold text-gray-400 uppercase pr-3">Lainnya</span>
+            <span class="text-xs font-semibold text-gray-400 uppercase pr-3">Lainnya</span>
             <div class="flex-grow border-t border-gray-200"></div>
         </div>
 
+        {{-- Complain Masuk --}}
         <a href="#"
-            class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300">
+            class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+            {{ request()->routeIs('admin.complain.*') ? 'bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-comments w-5"></i>
             <span>Complain Masuk</span>
         </a>
-        <a href="#"
-            class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300">
+
+        {{-- Total Pemasukan --}}
+        <a href="{{ route('admin.pendapatan.index') }}"
+            class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+            {{ request()->routeIs('admin.pendapatan.*') ? 'bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-wallet w-5"></i>
             <span>Total Pemasukan</span>
         </a>
-        <a href="#"
-            class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300">
+
+        {{-- Pesanan Selesai --}}
+        <a href="{{ route('admin.pemesanan.selesai') }}"
+            class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+            {{ request()->routeIs('admin.pemesanan.selesai') ? 'bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-box-open w-5"></i>
             <span>Pesanan Selesai</span>
         </a>
+
+        {{-- Banner --}}
         <a href="{{ route('admin.banner.index') }}"
-            class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300">
-
-            <i class="fas fa-image w-5"></i> {{-- Ikon untuk banner / promosi --}}
-
+            class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+            {{ request()->routeIs('admin.banner.*') ? 'bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+            <i class="fas fa-image w-5"></i>
             <span>Upload Banner Promosi</span>
         </a>
-
     </nav>
 </aside>
+
 
 <!-- Mobile Sidebar & Overlay -->
 <aside id="mobile-sidebar"

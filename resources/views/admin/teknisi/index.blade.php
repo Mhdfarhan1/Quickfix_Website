@@ -2,7 +2,15 @@
 
 @section('content')
     <div class="p-6">
-        <h1 class="text-2xl font-bold mb-4">Daftar Teknisi</h1>
+        <h1 class="text-2xl font-bold mb-0 flex items-center gap-2">
+            <i class="fas fa-users-cog text-blue-500 text-xl"></i>
+            Daftar Teknisi
+        </h1>
+
+        <p class="text-gray-600 text-xs tracking-wide mb-8">
+            Manajemen data teknisi yang terdaftar dalam sistem.
+        </p>
+
 
         @if(session('success'))
             <div class="bg-green-100 text-green-700 px-4 py-2 rounded mb-4">
@@ -16,8 +24,8 @@
             {{-- Entries --}}
             <div class="relative">
                 <select name="entries" onchange="this.form.submit()" class="appearance-none border border-gray-300 rounded-xl bg-white text-sm px-4 py-2 pr-10
-                           shadow-sm hover:border-blue-400 focus:border-blue-500 focus:ring focus:ring-blue-200/40
-                           transition-all cursor-pointer font-medium">
+                                   shadow-sm hover:border-blue-400 focus:border-blue-500 focus:ring focus:ring-blue-200/40
+                                   transition-all cursor-pointer font-medium">
                     <option value="5" {{ request('entries', $entries) == 5 ? 'selected' : '' }}>5</option>
                     <option value="10" {{ request('entries', $entries) == 10 ? 'selected' : '' }}>10</option>
                     <option value="25" {{ request('entries', $entries) == 25 ? 'selected' : '' }}>25</option>
@@ -30,22 +38,17 @@
                 </div>
             </div>
 
-
             {{-- Search --}}
             <div class="flex items-center gap-2">
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari..."
                     class="border border-gray-300 rounded-lg text-sm px-3 py-2 w-[180px]">
 
-                {{-- TIDAK DIPAKAI untuk autosubmit --}}
+                {{-- OPTIONAL: bisa dihapus kalau mau full auto-search --}}
                 <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">
                     Cari
                 </button>
             </div>
-
         </form>
-
-
-
 
         <div id="tableWrapper" class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
             <div class="overflow-x-auto">
@@ -139,14 +142,57 @@
             </div>
         </div>
 
-        {{-- Pagination --}}
-        <div class="mt-4">
+        {{-- Info entries + tombol Previous / Next --}}
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
+
+            {{-- Info jumlah entri --}}
+            <div>
+                @if ($teknisis->total() > 0)
+                    Menampilkan
+                    <span class="font-semibold">{{ $teknisis->firstItem() }}</span>
+                    sampai
+                    <span class="font-semibold">{{ $teknisis->lastItem() }}</span>
+                    dari
+                    <span class="font-semibold">{{ $teknisis->total() }}</span>
+                    entri
+                @else
+                    Tidak ada entri yang ditampilkan
+                @endif
+            </div>
+
+            {{-- Previous / Next --}}
+            <div class="flex items-center gap-2">
+                @php
+                    $paginator = $teknisis->appends(request()->except('page'));
+                @endphp
+
+                <a href="{{ $paginator->previousPageUrl() ?: '#' }}"
+                    class="px-3 py-1 rounded-lg border text-xs
+                                  {{ $paginator->onFirstPage() ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-100' }}">
+                    Previous
+                </a>
+
+                <span class="text-xs">
+                    Halaman
+                    <span class="font-semibold">{{ $paginator->currentPage() }}</span>
+                    /
+                    <span class="font-semibold">{{ $paginator->lastPage() }}</span>
+                </span>
+
+                <a href="{{ $paginator->hasMorePages() ? $paginator->nextPageUrl() : '#' }}"
+                    class="px-3 py-1 rounded-lg border text-xs
+                                  {{ $paginator->hasMorePages() ? 'bg-white hover:bg-gray-100' : 'bg-gray-100 text-gray-400 cursor-not-allowed' }}">
+                    Next
+                </a>
+            </div>
+        </div>
+
+        {{-- Kalau mau tetap pakai link standar Laravel, biarkan ini --}}
+        <div class="mt-2">
             {{ $teknisis->links() }}
         </div>
     </div>
 @endsection
-
-
 
 @section('scripts')
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -196,24 +242,19 @@
             });
 
             // ------------------------------
-            // AUTO SEARCH (Ketik langsung cari)
+            // AUTO SEARCH (ketik langsung reload)
             // ------------------------------
-            document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.querySelector("input[name='search']");
+            let typingDelay;
 
-                const searchInput = document.querySelector("input[name='search']");
-                let typingDelay;
-
-                if (searchInput) {
-                    searchInput.addEventListener("keyup", function () {
-                        clearTimeout(typingDelay);
-                        typingDelay = setTimeout(() => {
-                            this.form.submit(); // otomatis reload dengan keyword baru
-                        }, 400);
-                    });
-                }
-            });
-
-
+            if (searchInput && searchInput.form) {
+                searchInput.addEventListener("keyup", function () {
+                    clearTimeout(typingDelay);
+                    typingDelay = setTimeout(() => {
+                        this.form.submit(); // otomatis reload dengan keyword baru
+                    }, 400); // delay 400ms setelah berhenti mengetik
+                });
+            }
         });
     </script>
 @endsection

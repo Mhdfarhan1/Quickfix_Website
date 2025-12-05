@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\TeknisiController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\PemesananController;
+use App\Http\Controllers\Admin\PendapatanController;
 use App\Http\Controllers\Admin\AdminProfileController; // ⬅️ TAMBAHAN
 
 // Halaman landing
@@ -81,4 +83,12 @@ Route::middleware(['admin.auth'])->prefix('admin')->group(function () {
     // Aktif / Nonaktifkan banner
     Route::patch('banner/{banner}/toggle', [BannerController::class, 'toggle'])
         ->name('admin.banner.toggle');
+
+    // Route Pemesanan Selesai
+    Route::get('pemesanan/selesai', [PemesananController::class, 'selesai'])
+        ->name('admin.pemesanan.selesai');
+
+    // Route Pendapatan Admin
+    Route::get('pendapatan', [PendapatanController::class, 'index'])
+        ->name('admin.pendapatan.index');
 });

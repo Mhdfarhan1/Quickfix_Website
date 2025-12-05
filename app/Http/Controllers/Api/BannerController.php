@@ -18,7 +18,7 @@ class BannerController extends Controller
             ->get([
                 'id',
                 'judul',
-                'gambar',   // contoh: "banner_promosi/namafile.jpg"
+                'gambar', 
                 'link',
             ]);
 

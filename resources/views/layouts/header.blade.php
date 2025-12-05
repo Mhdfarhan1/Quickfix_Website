@@ -18,12 +18,7 @@
     </div>
 
     <div class="flex items-center gap-4">
-        <!-- Search -->
-        <div class="hidden md:flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-xl">
-            <i class="fas fa-search text-gray-400"></i>
-            <input type="text" placeholder="Cari..."
-                class="bg-transparent border-none outline-none text-sm text-gray-700 w-48">
-        </div>
+        
 
         <!-- User Dropdown -->
         <div class="relative">

@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TeknisiController;
 use App\Http\Controllers\Api\TrackingController;
+use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\KeranjangController;
 use App\Http\Controllers\Api\PemesananController;
 use App\Http\Controllers\Api\PasswordResetController;
@@ -219,6 +220,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/notifications/{id}/read', [NotifikasiController::class, 'markRead']);
 });
+
+// ===============================
+// 🔹 Komplain
+// ===============================
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/complaints', [ComplaintController::class, 'store']);
+});
+
+Route::middleware('auth:sanctum')->get('/complaints', [ComplaintController::class, 'index']);
+
 
 
 //benner

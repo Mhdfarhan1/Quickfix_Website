@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\TeknisiController;
+use App\Http\Controllers\Admin\ComplaintController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PemesananController;
 use App\Http\Controllers\Admin\PendapatanController;
@@ -91,4 +92,18 @@ Route::middleware(['admin.auth'])->prefix('admin')->group(function () {
     // Route Pendapatan Admin
     Route::get('pendapatan', [PendapatanController::class, 'index'])
         ->name('admin.pendapatan.index');
+
+    // Route Komplain
+    Route::get('complaints', [
+        ComplaintController::class,
+        'index'
+    ])->name('admin.complaints.index');
+    Route::get('complaints/{complaint}', [
+        ComplaintController::class,
+        'show'
+    ])->name('admin.complaints.show');
+    Route::put('complaints/{complaint}', [
+        ComplaintController::class,
+        'update'
+    ])->name('admin.complaints.update');
 });

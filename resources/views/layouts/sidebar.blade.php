@@ -69,7 +69,7 @@
         </div>
 
         {{-- Complain Masuk --}}
-        <a href="#"
+        <a href="{{ route('admin.complaints.index') }}"
             class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
             {{ request()->routeIs('admin.complain.*') ? 'bg-blue-100/50 text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-comments w-5"></i>

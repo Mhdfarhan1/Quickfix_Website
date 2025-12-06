@@ -17,7 +17,7 @@
             </div>
 
             <a href="{{ route('admin.complaints.index') }}"
-                class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs text-gray-600 hover:bg-gray-100">
+               class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs text-gray-600 hover:bg-gray-100">
                 <i class="fa-solid fa-arrow-left text-[11px]"></i>
                 Kembali
             </a>
@@ -141,7 +141,8 @@
                     @endif
 
                     {{-- INFORMASI PEMBAYARAN (JIKA KATEGORI PEMBAYARAN) --}}
-                    @if($complaint->kategori === 'pembayaran' && ($complaint->metode_pembayaran || $complaint->pembayaran))
+                    @if($complaint->kategori === 'pembayaran'
+                        && ($complaint->metode_pembayaran || $complaint->pembayaran || $complaint->nominal_id || $complaint->nomor_tujuan || $complaint->nama_tujuan))
                         <div class="border-t border-gray-100 pt-3 text-sm text-gray-700 space-y-1">
                             <h3 class="font-semibold mb-1 flex items-center gap-2">
                                 <i class="fa-solid fa-credit-card text-amber-600 text-xs"></i>
@@ -152,6 +153,29 @@
                                 <p>
                                     <span class="font-semibold">Metode:</span>
                                     {{ $complaint->metode_pembayaran }}
+                                </p>
+                            @endif
+
+                            {{-- ⭐ Tambahan: Nomor & Nama Tujuan --}}
+                            @if($complaint->nomor_tujuan)
+                                <p>
+                                    <span class="font-semibold">Nomor Tujuan:</span>
+                                    {{ $complaint->nomor_tujuan }}
+                                </p>
+                            @endif
+
+                            @if($complaint->nama_tujuan)
+                                <p>
+                                    <span class="font-semibold">Nama Pemilik:</span>
+                                    {{ $complaint->nama_tujuan }}
+                                </p>
+                            @endif
+
+                            {{-- ⭐ Tambahan: Nominal / ID Pembayaran --}}
+                            @if($complaint->nominal_id)
+                                <p>
+                                    <span class="font-semibold">Nominal / ID Pembayaran:</span>
+                                    {{ $complaint->nominal_id }}
                                 </p>
                             @endif
 
@@ -183,7 +207,7 @@
                         <div class="border-t border-gray-100 pt-3 text-sm">
                             <h3 class="font-semibold mb-1">Lampiran Bukti</h3>
                             <a href="{{ asset('storage/' . $complaint->lampiran) }}" target="_blank"
-                                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs text-gray-700">
+                               class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-xs text-gray-700">
                                 <i class="fa-solid fa-paperclip text-[11px]"></i>
                                 Lihat Lampiran
                             </a>
@@ -225,7 +249,7 @@
                                 Status Laporan
                             </label>
                             <select name="status"
-                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-200 focus:border-blue-500">
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-200 focus:border-blue-500">
                                 @foreach (['baru', 'diproses', 'selesai', 'ditolak'] as $status)
                                     <option value="{{ $status }}" @selected($complaint->status === $status)>
                                         {{ ucfirst($status) }}
@@ -241,12 +265,12 @@
                                 <span class="text-[10px] text-gray-400">(akan tampil di aplikasi)</span>
                             </label>
                             <textarea name="balasan_admin" rows="6"
-                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-200 focus:border-blue-500 resize-none"
-                                placeholder="Tuliskan penjelasan atau solusi yang akan dikirim ke pengguna...">{{ old('balasan_admin', $complaint->balasan_admin) }}</textarea>
+                                      class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-blue-200 focus:border-blue-500 resize-none"
+                                      placeholder="Tuliskan penjelasan atau solusi yang akan dikirim ke pengguna...">{{ old('balasan_admin', $complaint->balasan_admin) }}</textarea>
                         </div>
 
                         <button type="submit"
-                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 shadow-sm">
+                                class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 shadow-sm">
                             <i class="fa-solid fa-floppy-disk text-[11px]"></i>
                             Simpan Perubahan
                         </button>

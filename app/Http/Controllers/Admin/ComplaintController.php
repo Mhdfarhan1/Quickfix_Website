@@ -24,12 +24,23 @@ class ComplaintController extends Controller
 
         $complaints = Complaint::with('user')
             ->when($search, function ($query) use ($search) {
-                $query->where('jenis_masalah', 'like', "%{$search}%")
-                    ->orWhere('deskripsi', 'like', "%{$search}%")
-                    ->orWhere('kategori', 'like', "%{$search}%")
-                    ->orWhereHas('user', function ($q) use ($search) {
-                        $q->where('nama', 'like', "%{$search}%");
-                    });
+                $query->where(function ($q) use ($search) {
+                    $q->where('jenis_masalah', 'like', "%{$search}%")
+                      ->orWhere('deskripsi', 'like', "%{$search}%")
+                      ->orWhere('kategori', 'like', "%{$search}%")
+
+                      // 🔎 Tambahan filter terkait pesanan & pembayaran
+                      ->orWhere('nomor_pesanan', 'like', "%{$search}%")
+                      ->orWhere('metode_pembayaran', 'like', "%{$search}%")
+                      ->orWhere('nominal_id', 'like', "%{$search}%")
+
+                      // 🔥 Tambahan baru: nomor & nama tujuan pembayaran
+                      ->orWhere('nomor_tujuan', 'like', "%{$search}%")
+                      ->orWhere('nama_tujuan', 'like', "%{$search}%");
+                })
+                ->orWhereHas('user', function ($q) use ($search) {
+                    $q->where('nama', 'like', "%{$search}%");
+                });
             })
             ->latest()
             ->paginate($perPage)
@@ -40,7 +51,6 @@ class ComplaintController extends Controller
 
         return view('admin.complaints.index', compact('complaints', 'perPage', 'search'));
     }
-
 
     // DETAIL KOMPLAIN
     public function show(Complaint $complaint): View
@@ -53,20 +63,17 @@ class ComplaintController extends Controller
     // UPDATE STATUS + BALASAN ADMIN
     public function update(Request $request, Complaint $complaint): RedirectResponse
     {
-        // ✅ VALIDASI (tanpa named parameter)
         $validated = $request->validate([
             'status'        => 'required|in:baru,diproses,selesai,ditolak',
             'balasan_admin' => 'nullable|string',
         ]);
 
-        // ✅ UPDATE DATA
         $complaint->update([
             'status'        => $validated['status'],
             'balasan_admin' => $validated['balasan_admin'] ?? null,
-            'admin_id'      => auth()->id(), // ini aman, warning "undefined method id" cuma dari extension, bukan error Laravel
+            'admin_id'      => auth()->id(),
         ]);
 
-        // ✅ REDIRECT BALIK KE HALAMAN DETAIL
         return redirect()
             ->route('admin.complaints.show', $complaint->id)
             ->with('success', 'Komplain berhasil diperbarui.');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Teknisi;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -13,10 +14,6 @@ class TeknisiController extends Controller
     // Ambil satu teknisi berdasarkan id
     public function getTeknisi(Request $request)
     {
-
-        Log::info('=== [GET TEKNISI] Request Masuk ===', [
-            'query_params' => $request->all()
-        ]);
         $id = $request->query('id');
 
         if (!$id) {
@@ -35,7 +32,9 @@ class TeknisiController extends Controller
                 'user.foto_profile',
                 'teknisi.deskripsi',
                 'teknisi.pengalaman',
-                'teknisi.rating_avg',
+                DB::raw('(SELECT ROUND(AVG(ulasan.rating), 1) 
+                        FROM ulasan 
+                        WHERE ulasan.id_teknisi = teknisi.id_teknisi) as rating_avg'),
                 'teknisi.status',
                 DB::raw('GROUP_CONCAT(DISTINCT keahlian.nama_keahlian SEPARATOR ", ") as daftar_keahlian')
             )
@@ -53,6 +52,7 @@ class TeknisiController extends Controller
 
         return response()->json($teknisi);
     }
+
 
 
     // Ambil semua teknisi
@@ -316,6 +316,161 @@ class TeknisiController extends Controller
             "lokasi" => $alamat ?? "Tidak terdapat alamat default",
             "total_pesanan" => $totalPemesanan
         ]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->role !== 'teknisi') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Akses ditolak, hanya teknisi yang dapat mengubah profil.'
+            ], 403);
+        }
+
+
+        // cari data teknisi berdasarkan id_user
+        $teknisi = DB::table('teknisi')->where('id_user', $user->id_user)->first();
+        if (!$teknisi) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Teknisi tidak ditemukan'
+            ], 404);
+        }
+
+        // validasi hanya deskripsi
+        $validator = Validator::make($request->all(), [
+            'deskripsi' => 'required|string', // wajib diisi
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // update deskripsi saja
+        DB::table('teknisi')->where('id_teknisi', $teknisi->id_teknisi)
+            ->update([
+                'deskripsi' => $request->deskripsi,
+                'updated_at' => now(),
+            ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Profil diperbarui'
+        ], 200);
+
+    }
+
+
+
+    // Upload gambar galeri teknisi
+    public function uploadGaleri(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->role !== 'teknisi') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Akses ditolak, hanya teknisi yang dapat upload galeri.'
+            ], 403);
+        }
+
+        $teknisi = DB::table('teknisi')->where('id_user', $user->id_user)->first();
+        if (!$teknisi) {
+            return response()->json(['status' => false, 'message' => 'Teknisi tidak ditemukan'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|image|max:5120', // max 5MB
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $file = $request->file('file');
+        $path = $file->store('public/foto/galeri_teknisi'); // akan simpan di storage/app/public/foto/galeri_teknisi
+        $filename = basename($path);
+        $relative = 'foto/galeri_teknisi/' . $filename; // path yang akan disimpan di DB
+
+        $id = DB::table('galeri_teknisi')->insertGetId([
+            'id_teknisi' => $teknisi->id_teknisi,
+            'gambar_galeri' => $relative,   // ← ganti ini
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Foto galeri berhasil diupload',
+            'data' => [
+                'id_galeri' => $id,
+                'gambar_galeri' => url('storage/' . $relative),
+            ]
+        ]);
+    }
+
+    // Delete galeri
+    public function deleteGaleri($id)
+    {
+        $user = request()->user();
+
+        if ($user->role !== 'teknisi') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Akses ditolak, hanya teknisi yang dapat menghapus galeri.'
+            ], 403);
+        }
+
+        $teknisi = DB::table('teknisi')->where('id_user', $user->id_user)->first();
+
+        if (!$teknisi) {
+            return response()->json(['status' => false, 'message' => 'Teknisi tidak ditemukan'], 404);
+        }
+
+        $record = DB::table('galeri_teknisi')
+            ->where('id_galeri', $id)
+            ->where('id_teknisi', $teknisi->id_teknisi)
+            ->first();
+
+        if (!$record) {
+            return response()->json(['status' => false, 'message' => 'Galeri tidak ditemukan'], 404);
+        }
+
+        // hapus file
+        $diskPath = 'public/' . $record->gambar_galeri;
+        if (Storage::exists($diskPath)) {
+            Storage::delete($diskPath);
+        }
+
+        DB::table('galeri_teknisi')
+            ->where('id_galeri', $id)
+            ->delete();
+
+        return response()->json(['status' => true, 'message' => 'Galeri berhasil dihapus']);
+    }
+
+    public function getGaleri($id_teknisi)
+    {
+        $galeri = DB::table('galeri_teknisi')
+            ->where('id_teknisi', $id_teknisi)
+            ->orderBy('id_galeri', 'DESC')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $galeri->map(function ($item) {
+                return [
+                    'id_galeri' => $item->id_galeri,
+                    'gambar_galeri' => url('storage/' . $item->gambar_galeri),
+                ];
+            })
+        ], 200);
     }
 
 

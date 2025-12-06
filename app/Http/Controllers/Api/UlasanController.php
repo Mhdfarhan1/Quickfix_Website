@@ -63,7 +63,7 @@ class UlasanController extends Controller
     public function getUlasanTeknisi($id_teknisi)
     {
         $ulasan = Ulasan::where('id_teknisi', $id_teknisi)
-                        ->with('pelanggan:id_user,name')
+                        ->with('pelanggan:id_user,nama')
                         ->orderBy('created_at', 'desc')
                         ->get();
 

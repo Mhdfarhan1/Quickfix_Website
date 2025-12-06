@@ -67,6 +67,19 @@ class KeahlianTeknisiController extends Controller
         ], 200);
     }
 
+    public function getByTeknisiId($id_teknisi)
+        {
+            $services = KeahlianTeknisi::where('id_teknisi', $id_teknisi)
+                ->with('keahlian')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $services
+            ]);
+        }
+
+
     public function update(Request $request, $id)
     {
         $service = KeahlianTeknisi::find($id);

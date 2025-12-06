@@ -17,10 +17,10 @@ class Ulasan extends Model
         'komentar'
     ];
 
-    public function pelanggan()
-    {
-        return $this->belongsTo(User::class, 'id_pelanggan');
+    public function pelanggan(){
+        return $this->belongsTo(User::class, 'id_pelanggan')->select('id_user','nama');
     }
+
 
     public function teknisi()
     {

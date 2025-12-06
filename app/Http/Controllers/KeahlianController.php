@@ -15,4 +15,6 @@ class KeahlianController extends Controller
         $list = $q->select('id_keahlian','id_kategori','nama_keahlian','deskripsi')->get();
         return response()->json(['success'=>true,'data'=>$list]);
     }
+
+    
 }

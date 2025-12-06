@@ -158,12 +158,17 @@ class AuthController extends Controller
             }
         }
 
+        $teknisi = \App\Models\Teknisi::where('id_user', $user->id_user)->first();
+        $idTeknisi = $teknisi ? $teknisi->id_teknisi : null;
+
+
         return response()->json([
             'status' => true,
             'message' => 'Login berhasil!',
             'token' => $token,
             'user' => [
                 'id_user' => $user->id_user,
+                'id_teknisi' => $idTeknisi,
                 'nama' => $user->nama,
                 'email' => $user->email,
                 'role' => $user->role,

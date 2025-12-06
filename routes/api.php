@@ -12,7 +12,7 @@ use App\Http\Controllers\Api\BuktiController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\AlamatController;
 use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\PasswordResetOtpController;
 use App\Http\Controllers\Api\KeranjangController;
 use App\Http\Controllers\Api\TeknisiPesananController;
 use App\Http\Controllers\Api\LokasiController;
@@ -178,6 +178,10 @@ Route::prefix('password')->group(function () {
     Route::post('/reset', [PasswordResetController::class, 'resetPassword']);
 });
 
+Route::post('/password/reset-otp', [PasswordResetOtpController::class, 'sendResetOtp']);
+Route::post('/password/verify-otp', [PasswordResetOtpController::class, 'verifyResetOtp']);
+
+
 
 Route::get('/tes', function () {
     return response()->json(['status' => 'OK']);
@@ -263,15 +267,28 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 });
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/ulasan', [UlasanController::class, 'create']);
-    Route::get('/teknisi/{id}/ulasan', [UlasanController::class, 'getUlasanTeknisi']);
-    Route::get('/pemesanan/{id}/ulasan', [UlasanController::class, 'cekUlasanPemesanan']);
+// Public (siapa pun bisa lihat ulasan teknisi)
+Route::get('/teknisi/{id}/ulasan', [UlasanController::class, 'getUlasanTeknisi']);
 
+Route::middleware('auth:sanctum')->group(function () {
+    // buat ulasan
+    Route::post('/ulasan', [UlasanController::class, 'create']);
+
+    // cek ulasan pemesanan (untuk user)
+    Route::get('/pemesanan/{id}/ulasan', [UlasanController::class, 'cekUlasanPemesanan']);
 });
 
 
 
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/teknisi/update_profile', [TeknisiController::class, 'updateProfile']);
+    Route::post('/teknisi/upload_galeri', [TeknisiController::class, 'uploadGaleri']);
+    Route::delete('/teknisi/galeri/{id}', [TeknisiController::class, 'deleteGaleri']);
+});
+
+Route::middleware('auth:sanctum')->get('/teknisi/{id}/galeri', 
+    [TeknisiController::class, 'getGaleri']);
 
 
 // ===============================
@@ -280,6 +297,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/teknisi/keahlian', [KeahlianTeknisiController::class, 'store']);
     Route::get('/teknisi/keahlian', [KeahlianTeknisiController::class, 'getByTeknisi']);
+    Route::get('/teknisi/{id_teknisi}/keahlian', [KeahlianTeknisiController::class, 'getByTeknisiId']);
     Route::put('/teknisi/keahlian/{id}', [KeahlianTeknisiController::class, 'update']);
     Route::delete('/teknisi/keahlian/{id}', [KeahlianTeknisiController::class, 'destroy']);
 });

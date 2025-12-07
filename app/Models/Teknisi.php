@@ -24,6 +24,12 @@ class Teknisi extends Model
         return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
 
+    public function verifikasi()
+    {
+        return $this->hasOne(VerifikasiTeknisi::class, 'id_teknisi', 'id_teknisi');
+    }
+
+
     public function keahlian()
     {
         return $this->belongsToMany(Keahlian::class, 'teknisi_keahlian', 'id_teknisi', 'id_keahlian');

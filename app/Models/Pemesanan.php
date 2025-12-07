@@ -60,4 +60,13 @@ class Pemesanan extends Model
     {
         return $this->hasMany(BuktiPekerjaan::class, 'id_pemesanan', 'id_pemesanan');
     }
+
+    public function updateStatus($newStatus)
+    {
+        $this->status_pekerjaan = $newStatus;
+        $this->save();
+
+        Notify::statusChanged($this->id_pelanggan, $newStatus);
+    }
+
 }

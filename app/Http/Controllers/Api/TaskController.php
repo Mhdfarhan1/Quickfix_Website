@@ -25,11 +25,11 @@ class TaskController extends Controller
             ->leftJoin('lokasi_teknisi', 'pemesanan.id_teknisi', '=', 'lokasi_teknisi.id_teknisi')
 
             ->where('pemesanan.id_teknisi', $idTeknisi)
-            ->whereDate('pemesanan.tanggal_booking', today())
             ->whereIn('pemesanan.status_pekerjaan', [
                 'dijadwalkan',
                 'menuju_lokasi',
-                'sedang_bekerja'
+                'sedang_bekerja',
+                'selesai'
             ])
 
             ->select(
@@ -38,6 +38,8 @@ class TaskController extends Controller
                 'pemesanan.id_pelanggan',
                 'pemesanan.id_keahlian',
                 'pemesanan.id_alamat',
+                'user.no_hp as no_hp_pelanggan',
+
 
                 'pemesanan.kode_pemesanan',
                 'user.nama as nama_pelanggan',
@@ -60,14 +62,7 @@ class TaskController extends Controller
             ->orderBy('pemesanan.jam_booking', 'asc')
             ->get();
 
-        if ($tasks->isEmpty()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Tidak ada tugas hari ini',
-                'data' => []
-            ]);
-        }
-
+        
         return response()->json([
             'status' => true,
             'debug_sample' => $tasks->first(), 
@@ -77,40 +72,63 @@ class TaskController extends Controller
 
 
 
-    public function selesaikanPekerjaan($id_pemesanan)
+    public function getRiwayatTeknisi(Request $request)
     {
-        $jumlahBukti = BuktiPekerjaan::where('id_pemesanan', $id_pemesanan)->count();
+        $idUser = $request->user()->id_user;
 
-        if ($jumlahBukti < 1) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Upload minimal 1 foto bukti terlebih dahulu'
-            ], 400);
-        }
+        // Cari id_teknisi berdasarkan user yang sedang login
+        $idTeknisi = DB::table('teknisi')
+            ->where('id_user', $idUser)
+            ->value('id_teknisi');
 
-        $pesanan = Pemesanan::where('id_pemesanan', $id_pemesanan)->first();
+        // Ambil semua pesanan yang statusnya selesai atau batal
+        $riwayat = DB::table('pemesanan')
+            ->join('user', 'pemesanan.id_pelanggan', '=', 'user.id_user')
+            ->leftJoin('alamat', 'pemesanan.id_alamat', '=', 'alamat.id_alamat')
+            ->leftJoin('keahlian', 'pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
 
-        if (!$pesanan) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Pesanan tidak ditemukan'
-            ], 404);
-        }
+            // JOIN chat berdasarkan id_pelanggan + id_teknisi
+            ->leftJoin('chats', function($join) use ($idTeknisi) {
+                $join->on('chats.id_user', '=', 'pemesanan.id_pelanggan')
+                    ->where('chats.id_teknisi', '=', $idTeknisi);
+            })
 
-        if ($pesanan->status_pekerjaan === 'selesai') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Pesanan sudah selesai dan dikunci'
-            ], 403);
-        }
+            ->where('pemesanan.id_teknisi', $idTeknisi)
+            ->whereIn('pemesanan.status_pekerjaan', ['selesai', 'batal'])
 
-        $pesanan->update([
-            'status_pekerjaan' => 'selesai'
-        ]);
+            ->select(
+                'pemesanan.id_pemesanan as id',
+                'pemesanan.id_teknisi',
+                'pemesanan.kode_pemesanan',
+                'user.id_user',
+                'user.nama as nama_pelanggan',
+                'keahlian.nama_keahlian',
+                'pemesanan.keluhan',
+                'user.no_hp as no_hp_pelanggan',
+
+                'pemesanan.status_pekerjaan',
+                'pemesanan.harga',
+
+                'alamat.alamat_lengkap',
+                'alamat.latitude',
+                'alamat.longitude',
+
+                'pemesanan.tanggal_booking',
+                'pemesanan.jam_booking',
+                'pemesanan.created_at',
+
+                // Tambahkan field ini
+                'chats.id_chat'
+            )
+            ->orderBy('pemesanan.created_at', 'DESC')
+            ->get();
+
 
         return response()->json([
             'status' => true,
-            'message' => 'Pekerjaan berhasil diselesaikan'
+            'total' => $riwayat->count(),
+            'data' => $riwayat
         ]);
     }
+
 }

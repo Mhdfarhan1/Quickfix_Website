@@ -86,11 +86,10 @@ return new class extends Migration {
         Schema::create('keahlian_teknisi', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('id_teknisi');
-            $table->unsignedBigInteger('id_keahlian');
+            $table->unsignedBigInteger('id_keahlian');      
 
             // ✅ Tambahkan kolom harga di sini
-            $table->integer('harga_min')->nullable();
-            $table->integer('harga_max')->nullable();
+            $table->integer('harga')->nullable();
             $table->string('gambar_layanan')->nullable();
 
             $table->timestamps();
@@ -106,11 +105,30 @@ return new class extends Migration {
                 ->on('keahlian')
                 ->onDelete('cascade');
         });
+
+        Schema::create('sertifikat_teknisi', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('id_teknisi');
+            $table->string('nama_sertifikat');
+            $table->string('file_sertifikat');
+            $table->boolean('is_verified')->default(false);
+            $table->timestamps();
+
+            $table->foreign('id_teknisi')
+                ->references('id_teknisi')
+                ->on('teknisi')
+                ->onDelete('cascade');
+        });
+
+
     }
+
+    
 
     public function down(): void
     {
         Schema::dropIfExists('keahlian_teknisi');
+        Schema::dropIfExists('sertifikat_teknisi');
         Schema::dropIfExists('alamat');
         Schema::dropIfExists('keahlian');
         Schema::dropIfExists('kategori');

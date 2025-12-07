@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Pemesanan;
 use Midtrans\Config;
 use Midtrans\Snap;
+use App\Services\Notify;
 
 class PaymentController extends Controller
 {
@@ -108,6 +109,11 @@ class PaymentController extends Controller
             'status_pekerjaan' => $statusPekerjaan,
         ]);
 
+        if ($paymentStatus == 'settlement') {
+            Notify::paymentSuccess($order->id_pelanggan);
+        }
+
+
         Log::info("✅ Order {$kodePemesanan} diperbarui menjadi {$paymentStatus}");
         return response()->json(['message' => 'OK']);
     }
@@ -142,6 +148,7 @@ class PaymentController extends Controller
         if (!$pemesanan) {
             return response()->json(['status' => false, 'message' => 'Data tidak ditemukan'], 404);
         }
+
 
         return response()->json([
             'status' => true,

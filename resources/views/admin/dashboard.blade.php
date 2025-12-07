@@ -66,7 +66,7 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-green-100 text-sm font-medium mb-1">Total Pemasukan</p>
-                        <h3 class="text-3xl font-bold mb-2">Rp 12.500.000</h3>
+                        <h3 class="text-3xl font-bold mb-2">Rp {{ number_format($totalPendapatanAdmin, 0, ',', '.') }}</h3>
                         <div class="flex items-center gap-1 text-sm">
                             <i class="fas fa-arrow-up"></i>
                             <span class="text-green-100">Bulan ini</span>
@@ -84,7 +84,7 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-yellow-100 text-sm font-medium mb-1">Pesanan Selesai</p>
-                        <h3 class="text-3xl font-bold mb-2">45</h3>
+                        <h3 class="text-3xl font-bold mb-2">{{ $jumlahPemesananSelesai }}</h3>
                         <div class="flex items-center gap-1 text-sm">
                             <i class="fas fa-history"></i>
                             <span class="text-yellow-100">Total transaksi</span>
@@ -97,47 +97,130 @@
             </div>
 
         </div>
+        {{-- 2 CHART: TEKNISI & PENGGUNA --}}
+        <div class="mt-8 space-y-4">
 
-        <!-- Main Content -->
-        <div class="p-6">
-            <h2 class="text-xl font-bold mb-4">Statistik Teknisi</h2>
-            <canvas id="teknisiChart" class="w-full h-64 bg-white rounded-xl shadow-md p-4"></canvas>
+            {{-- TITLE + FILTER --}}
+            <div class="flex justify-between items-center">
+                {{-- Judul kiri --}}
+                <h2 class="text-xl font-bold text-gray-800">
+                    Statistik Pendaftaran (Teknisi & Pengguna)
+                </h2>
+
+                {{-- Filter kanan --}}
+                <form method="GET" id="filterBulanForm" class="flex items-center gap-2">
+                    <label class="text-sm text-gray-600">Filter Tahun</label>
+
+                    <select name="year" id="selectYear"
+                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
+                        @foreach(range(now()->year - 2, now()->year) as $y)
+                            <option value="{{ $y }}" {{ request('year', now()->year) == $y ? 'selected' : '' }}>
+                                {{ $y }}
+                            </option>
+                        @endforeach
+                    </select>
+                </form>
+            </div>
+
+            {{-- GRID 2 CHART --}}
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {{-- Chart Teknisi --}}
+                <div class="bg-white rounded-2xl shadow-md p-4">
+                    <h2 class="text-lg font-semibold mb-3">Teknisi Terdaftar</h2>
+                    <canvas id="teknisiChart" class="w-full h-64"></canvas>
+                </div>
+
+                {{-- Chart Pengguna --}}
+                <div class="bg-white rounded-2xl shadow-md p-4">
+                    <h2 class="text-lg font-semibold mb-3">Pengguna Terdaftar</h2>
+                    <canvas id="penggunaChart" class="w-full h-64"></canvas>
+                </div>
+            </div>
         </div>
 
-        <!-- Chart.js -->
+        {{-- TARUH INI DI BAWAH (atau di @section('scripts') --}}
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
-            const ctx = document.getElementById('teknisiChart').getContext('2d');
-            const teknisiChart = new Chart(ctx, {
-                type: 'bar', // jenis chart: bar, line, pie, etc.
-                data: {
-                    labels: ['Januari', 'Februari', 'Maret', 'April', 'Mei'],
-                    datasets: [{
-                        label: 'Total Teknisi',
-                        data: [5, 8, 12, 9, 14],
-                        backgroundColor: 'rgba(59, 130, 246, 0.7)', // biru
-                        borderColor: 'rgba(59, 130, 246, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'top'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Jumlah Teknisi Per Bulan'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        </script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const form = document.getElementById('filterBulanForm');
+    const selectMonth = document.getElementById('selectMonth');
+    const selectYear = document.getElementById('selectYear');
+
+    if (selectMonth) selectMonth.addEventListener('change', () => form.submit());
+    if (selectYear)  selectYear.addEventListener('change', () => form.submit());
+
+    // DATA DARI CONTROLLER
+    let labels = {!! json_encode($labels ?? []) !!} || [];
+    let teknisiData = {!! json_encode($teknisiPerMonth ?? []) !!} || [];
+    let penggunaData = {!! json_encode($penggunaPerMonth ?? []) !!} || [];
+
+    // 🔥 FORMAT LABEL → NAMA BULAN SAJA
+    labels = labels.map(lbl => {
+        const d = new Date(lbl);
+        if (!isNaN(d)) {
+            return d.toLocaleString('id-ID', { month: 'long' });
+        }
+        return lbl;
+    });
+
+    // Fallback jika kosong
+    if (labels.length === 0) {
+        labels = ["Tidak ada data"];
+        teknisiData = [0];
+        penggunaData = [0];
+    }
+
+    // TEKNISI CHART
+    const teknisiCanvas = document.getElementById('teknisiChart');
+    if (teknisiCanvas) {
+        new Chart(teknisiCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Teknisi Baru',
+                    data: teknisiData,
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    }
+
+    // PENGGUNA CHART
+    const penggunaCanvas = document.getElementById('penggunaChart');
+    if (penggunaCanvas) {
+        new Chart(penggunaCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Pengguna Baru',
+                    data: penggunaData,
+                    backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                    borderColor: 'rgba(34, 197, 94, 1)',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    }
+});
+</script>
+
+
+
+
     </main>
 @endsection

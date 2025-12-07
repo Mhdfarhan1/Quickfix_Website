@@ -19,7 +19,7 @@
     <!--swertalert2-->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    
+
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -33,6 +33,21 @@
 
 
     <style>
+        @keyframes fadeMenu {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade {
+            animation: fadeMenu .25s ease-out;
+        }
     </style>
 
     @stack('styles')
@@ -150,9 +165,11 @@
             }
 
             document.addEventListener('DOMContentLoaded', setActiveLink);
+
+            
         </script>
 
-        
+
     @endpush
 
 </body>

@@ -16,8 +16,7 @@ class KeahlianTeknisiController extends Controller
         $data = $request->validate([
             'id_keahlian' => ['nullable', 'integer', 'exists:keahlian,id_keahlian'],
             'nama' => ['required_without:id_keahlian', 'nullable', 'string', 'max:255'],
-            'harga_min' => ['nullable', 'integer', 'min:0'],
-            'harga_max' => ['nullable', 'integer', 'min:0'],
+            'harga' => ['required', 'integer', 'min:0'],  // << GANTI WAJIB
             'deskripsi' => ['nullable', 'string'],
             'gambar_layanan' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:5120'],
         ]);
@@ -37,8 +36,7 @@ class KeahlianTeknisiController extends Controller
             'id_teknisi' => $teknisi->id_teknisi,
             'id_keahlian' => $data['id_keahlian'] ?? null,
             'nama' => $data['nama'] ?? null,
-            'harga_min' => $data['harga_min'] ?? null,
-            'harga_max' => $data['harga_max'] ?? null,
+            'harga' => $data['harga'], // << GANTI
             'deskripsi' => $data['deskripsi'] ?? null,
             'gambar_layanan' => $path ? ('/storage/' . $path) : null,
         ]);
@@ -95,8 +93,7 @@ class KeahlianTeknisiController extends Controller
         $data = $request->validate([
             'id_keahlian' => ['nullable', 'integer', 'exists:keahlian,id_keahlian'],
             'nama' => ['nullable', 'string', 'max:255'],
-            'harga_min' => ['nullable', 'integer', 'min:0'],
-            'harga_max' => ['nullable', 'integer', 'min:0'],
+            'harga' => ['nullable', 'integer', 'min:0'],
             'deskripsi' => ['nullable', 'string'],
             'gambar_layanan' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:5120'],
         ]);

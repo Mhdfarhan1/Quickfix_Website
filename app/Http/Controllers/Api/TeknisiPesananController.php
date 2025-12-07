@@ -101,22 +101,35 @@ class TeknisiPesananController extends Controller
             ->join('user as pelanggan', 'pemesanan.id_pelanggan', '=', 'pelanggan.id_user')
             ->join('alamat', 'pemesanan.id_alamat', '=', 'alamat.id_alamat')
             ->join('keahlian', 'pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
+            ->leftJoin('foto_keluhan as fk', 'fk.id_pemesanan', '=', 'pemesanan.id_pemesanan')
             ->where('pemesanan.id_teknisi', $idTeknisi)
             ->where('pemesanan.status_pekerjaan', 'dijadwalkan')
             ->select(
                 'pemesanan.*',
                 'pelanggan.nama as nama_pelanggan',
-                'pelanggan.no_hp as no_hp',
+                'pelanggan.no_hp',
                 'alamat.alamat_lengkap',
                 'alamat.kota',
-                'keahlian.nama_keahlian'
+                'keahlian.nama_keahlian',
+                DB::raw("GROUP_CONCAT(fk.foto_keluhan SEPARATOR '|') as foto_keluhan")
             )
-            ->orderBy('pemesanan.tanggal_booking')
+            ->groupBy('pemesanan.id_pemesanan')
+            ->orderBy('pemesanan.id_pemesanan', 'DESC')
             ->get();
+
+
 
         \Log::info("DIJADWALKAN - JUMLAH DATA:", [
             'count' => $data->count()
         ]);
+
+        $data->transform(function ($item) {
+            $item->foto_keluhan = $item->foto_keluhan 
+                ? explode('|', $item->foto_keluhan) 
+                : [];
+            return $item;
+        });
+
 
         return response()->json([
             'status' => true,

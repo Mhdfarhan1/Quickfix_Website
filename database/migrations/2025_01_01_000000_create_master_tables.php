@@ -86,11 +86,10 @@ return new class extends Migration {
         Schema::create('keahlian_teknisi', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('id_teknisi');
-            $table->unsignedBigInteger('id_keahlian');
+            $table->unsignedBigInteger('id_keahlian');      
 
             // ✅ Tambahkan kolom harga di sini
-            $table->integer('harga_min')->nullable();
-            $table->integer('harga_max')->nullable();
+            $table->integer('harga')->nullable();
             $table->string('gambar_layanan')->nullable();
 
             $table->timestamps();

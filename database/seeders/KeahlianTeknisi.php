@@ -13,8 +13,7 @@ class KeahlianTeknisiSeeder extends Seeder
             [
                 'id_teknisi' => 1,
                 'id_keahlian' => 1,
-                'harga_min' => 50000,
-                'harga_max' => 150000,
+                'harga' => 15000,
                 'gambar_layanan' => 'service_ac.jpg'
             ]
         ]);

@@ -20,7 +20,6 @@ class TaskController extends Controller
 
         $tasks = DB::table('pemesanan')
             ->join('user', 'pemesanan.id_pelanggan', '=', 'user.id_user')
-            ->join('user', 'pemesanan.id_pelanggan', '=', 'user.id_user')
             ->leftJoin('alamat', 'pemesanan.id_alamat', '=', 'alamat.id_alamat')
             ->leftJoin('keahlian', 'pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
             ->leftJoin('lokasi_teknisi', 'pemesanan.id_teknisi', '=', 'lokasi_teknisi.id_teknisi')
@@ -101,6 +100,7 @@ class TaskController extends Controller
                 'pemesanan.id_pemesanan as id',
                 'pemesanan.id_teknisi',
                 'pemesanan.kode_pemesanan',
+                'user.id_user',
                 'user.nama as nama_pelanggan',
                 'keahlian.nama_keahlian',
                 'pemesanan.keluhan',

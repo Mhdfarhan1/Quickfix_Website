@@ -35,14 +35,6 @@ return new class extends Migration
                 ->onDelete('cascade');
         });
 
-        Schema::create('banners', function (Blueprint $table) {
-            $table->id();
-            $table->string('judul');
-            $table->string('gambar');
-            $table->string('link')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-        });
 
         Schema::create('faqs', function (Blueprint $table) {
             $table->id();

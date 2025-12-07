@@ -90,10 +90,6 @@ class TeknisiController extends Controller
                     $join->on('gambar_layanan.id_keahlian', '=', 'keahlian.id_keahlian')
                         ->on('gambar_layanan.id_teknisi', '=', 'keahlian_teknisi.id_teknisi');
                 })
-                ->leftJoin('pemesanan', function ($join) {
-                    $join->on('pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
-                        ->on('pemesanan.id_teknisi', '=', 'keahlian_teknisi.id_teknisi');
-                })
                 ->leftJoin('ulasan', function ($join) {
                     $join->on('ulasan.id_teknisi', '=', 'keahlian_teknisi.id_teknisi');
                 })
@@ -111,11 +107,18 @@ class TeknisiController extends Controller
                         END AS gambar
                     '),
                     DB::raw('ROUND(AVG(ulasan.rating), 1) as rating'),
-                    DB::raw('MIN(pemesanan.harga) as harga_min'),
-                    DB::raw('MAX(pemesanan.harga) as harga_max')
+                    DB::raw('COALESCE(keahlian_teknisi.harga, 0) AS harga')
                 )
                 ->where('keahlian_teknisi.id_teknisi', $id)
-                ->groupBy('keahlian.id_keahlian', 'keahlian_teknisi.id_teknisi', 'gambar_layanan.url_gambar', 'kategori.nama_kategori')
+                ->groupBy(
+                    'keahlian_teknisi.id_teknisi',
+                    'keahlian.id_keahlian',
+                    'keahlian.nama_keahlian',
+                    'keahlian.deskripsi',
+                    'kategori.nama_kategori',
+                    'keahlian_teknisi.gambar_layanan',
+                    'keahlian_teknisi.harga'   // ← WAJIB TAMBAH
+                )
                 ->get();
 
             return response()->json($layanan);
@@ -172,8 +175,7 @@ class TeknisiController extends Controller
             'keahlian.id_keahlian',
             'keahlian.nama_keahlian',
             DB::raw('COALESCE(teknisi.rating_avg, 0) AS rating'),
-            DB::raw('COALESCE(MIN(pemesanan.harga), 0) AS harga_min'),
-            DB::raw('COALESCE(MAX(pemesanan.harga), 0) AS harga_max'),
+            DB::raw('COALESCE(keahlian_teknisi.harga, 0) AS harga'),
             DB::raw('
                 CASE
                     WHEN keahlian_teknisi.gambar_layanan IS NULL OR keahlian_teknisi.gambar_layanan = ""
@@ -190,7 +192,9 @@ class TeknisiController extends Controller
             'keahlian.id_keahlian',
             'keahlian.nama_keahlian',
             'teknisi.rating_avg',
-            'keahlian_teknisi.gambar_layanan'
+            'keahlian_teknisi.gambar_layanan',
+            'keahlian_teknisi.harga'
+
         );
 
         // 🔽 Sorting aman
@@ -198,11 +202,8 @@ class TeknisiController extends Controller
             case 'rating':
                 $query->orderBy(DB::raw('COALESCE(teknisi.rating_avg, 0)'), 'DESC');
                 break;
-            case 'harga_min':
-                $query->orderBy(DB::raw('MIN(pemesanan.harga)'), 'ASC');
-                break;
-            case 'harga_max':
-                $query->orderBy(DB::raw('MAX(pemesanan.harga)'), 'DESC');
+            case 'harga':
+                $query->orderBy('harga', 'ASC');
                 break;
             default:
                 $query->orderBy('user.nama', 'ASC');
@@ -274,11 +275,8 @@ class TeknisiController extends Controller
         $harga = DB::table('keahlian_teknisi')
             ->where('id_teknisi', $idTeknisi)
             ->where('id_keahlian', $idKeahlian)
-            ->select(
-                'harga_min',
-                'harga_max'
-            )
-            ->first();
+            ->value('harga');
+
 
 
         // ulasan
@@ -308,8 +306,7 @@ class TeknisiController extends Controller
         return response()->json([
             "nama" => $teknisi->nama,
             "rating" => $teknisi->rating,
-            "harga_min" => $harga->harga_min ?? 0,
-            "harga_max" => $harga->harga_max ?? 0,
+            'harga' => $harga,
             "gambar" => $gambar,
             "ulasan" => $ulasan,
             "garansi" => 5,

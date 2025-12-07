@@ -110,13 +110,13 @@ class DatabaseSeeder extends Seeder
             DB::table('keahlian_teknisi')->insert([
                 'id_teknisi' => $idTeknisi,
                 'id_keahlian' => $kId,
-                'harga_min' => rand(50000, 100000),
-                'harga_max' => rand(150000, 500000),
-                'gambar_layanan' => null, // Let it use default or we can add dummy images later
+                'harga' => rand(50000, 500000),  // 🔥 hanya 1 harga
+                'gambar_layanan' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
+
 
         // ========================
         // 5️⃣ ALAMAT

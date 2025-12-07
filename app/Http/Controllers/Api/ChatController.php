@@ -16,36 +16,68 @@ class ChatController extends Controller
     // start or get existing chat
     public function start(Request $request)
     {
-        $user = $request->user();
-        $id_teknisi = $request->input('id_teknisi');
+        $auth = $request->user();
 
+        $id_user = null;
+        $id_teknisi = null;
+
+        // Jika role pelanggan → user ini adalah pelanggan, teknisi dikirim dari request
+        if ($auth->role === 'pelanggan') {
+            $id_user = $auth->id_user;
+            $id_teknisi = $request->input('id_teknisi');
+        }
+
+        // Jika role teknisi → user ini adalah teknisi, pelanggan dikirim dari request
+        if ($auth->role === 'teknisi') {
+            $id_user = $request->input('id_user');        // harus dikirim dari flutter
+            $id_teknisi = $auth->teknisi->id_teknisi;
+        }
+
+        if (!$id_user || !$id_teknisi) {
+            return response()->json([
+                'status' => false,
+                'message' => 'id_user atau id_teknisi tidak valid'
+            ], 422);
+        }
+
+        // Cari chat EXISTING antara user dan teknisi
         $chat = Chat::firstOrCreate(
-            ['id_user' => $user->id_user, 'id_teknisi' => $id_teknisi],
-            ['last_message' => null]
+            [
+                'id_user' => $id_user,
+                'id_teknisi' => $id_teknisi
+            ],
+            [
+                'last_message' => null,
+                'last_message_at' => null
+            ]
         );
 
-        return response()->json(['status'=>true,'chat'=>$chat]);
+        return response()->json([
+            'status' => true,
+            'chat' => $chat
+        ]);
     }
 
+
+
     // list chats for authenticated user (as pelanggan or teknisi)
-    public function list(Request $request)
+    // ganti nama method dari list() → listChats()
+    public function listChats(Request $request)
     {
         $user = $request->user();
 
         $query = Chat::with([
-            'user',            // pelanggan
-            'teknisi.user',    // teknisi -> user
+            'user',
+            'teknisi.user',
             'messages' => function($q){
                 $q->latest()->limit(1);
             }
         ]);
 
-        // kalau login sebagai pelanggan
         if ($user->role === 'pelanggan') {
             $query->where('id_user', $user->id_user);
         }
 
-        // kalau login sebagai teknisi
         if ($user->role === 'teknisi' && $user->teknisi) {
             $query->where('id_teknisi', $user->teknisi->id_teknisi);
         }
@@ -57,6 +89,7 @@ class ChatController extends Controller
             'data' => $chats
         ]);
     }
+
 
 
     // get messages

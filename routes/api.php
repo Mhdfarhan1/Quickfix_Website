@@ -96,6 +96,10 @@ Route::post('/keranjang/checkout', [KeranjangController::class, 'checkout']);
 // ===============================
 Route::middleware('auth:sanctum')->get('/profile', [ProfileController::class, 'show']);
 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::put('/user/update', [ProfileController::class, 'update']);
+});
+
 // PROFILE & GAMBAR
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/upload_foto', [ProfileController::class, 'uploadFoto']);

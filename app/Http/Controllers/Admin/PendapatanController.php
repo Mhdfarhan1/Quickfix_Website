@@ -16,10 +16,7 @@ class PendapatanController extends Controller
         // 🔹 Base query: hanya pesanan yang SUDAH SELESAI dikerjakan
         $baseQuery = Pemesanan::where('status_pekerjaan', 'selesai');
 
-        // ==============================
-        //   SUMMARY / RINGKASAN ATAS
-        //   (TIDAK TERPENGARUH SEARCH)
-        // ==============================
+        
 
         $summaryQuery = clone $baseQuery;
 

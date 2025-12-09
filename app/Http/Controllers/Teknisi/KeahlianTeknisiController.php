@@ -16,7 +16,7 @@ class KeahlianTeknisiController extends Controller
         $data = $request->validate([
             'id_keahlian' => ['nullable', 'integer', 'exists:keahlian,id_keahlian'],
             'nama' => ['required_without:id_keahlian', 'nullable', 'string', 'max:255'],
-            'harga' => ['required', 'integer', 'min:0'],  // << GANTI WAJIB
+            'harga' => ['required', 'integer', 'min:0'],
             'deskripsi' => ['nullable', 'string'],
             'gambar_layanan' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:5120'],
         ]);
@@ -29,7 +29,7 @@ class KeahlianTeknisiController extends Controller
             // Buat nama unik agar tidak tabrakan
             $filename = 'layanan_' . time() . '.' . $file->getClientOriginalExtension();
 
-            // Simpan file ke folder "foto/gambar_layanan" di disk public
+            // Simpan file
             $file->storeAs('foto/gambar_layanan', $filename, 'public');
         }
 
@@ -73,16 +73,16 @@ class KeahlianTeknisiController extends Controller
     }
 
     public function getByTeknisiId($id_teknisi)
-        {
-            $services = KeahlianTeknisi::where('id_teknisi', $id_teknisi)
-                ->with('keahlian')
-                ->get();
+    {
+        $services = KeahlianTeknisi::where('id_teknisi', $id_teknisi)
+            ->with('keahlian')
+            ->get();
 
-            return response()->json([
-                'success' => true,
-                'data' => $services
-            ]);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => $services
+        ]);
+    }
 
 
     public function update(Request $request, $id)
@@ -109,7 +109,7 @@ class KeahlianTeknisiController extends Controller
 
             // Hapus file lama
             if ($service->gambar_layanan) {
-                Storage::disk('public')->delete('foto/gambar_layanan/'.$service->gambar_layanan);
+                Storage::disk('public')->delete('foto/gambar_layanan/' . $service->gambar_layanan);
             }
 
             $file = $request->file('gambar_layanan');
@@ -144,7 +144,7 @@ class KeahlianTeknisiController extends Controller
         }
 
         if ($service->gambar_layanan) {
-            Storage::disk('public')->delete('foto/gambar_layanan/'.$service->gambar_layanan);
+            Storage::disk('public')->delete('foto/gambar_layanan/' . $service->gambar_layanan);
         }
 
 

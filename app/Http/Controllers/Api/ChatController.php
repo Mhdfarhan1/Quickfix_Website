@@ -14,7 +14,7 @@ use DB;
 class ChatController extends Controller
 {
     // start or get existing chat
-    public function start(Request $request)
+    public function start(Request $request) 
     {
         $auth = $request->user();
 

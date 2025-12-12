@@ -13,6 +13,7 @@ class PemesananController extends Controller
     {
         $search = $request->input('search');
         $entries = $request->input('entries', 10);
+        $status  = $request->input('status', 'all'); // <-- ambil filter status dari query
 
         $query = DB::table('pemesanan')
             ->join('user as pelanggan', 'pemesanan.id_pelanggan', '=', 'pelanggan.id_user')
@@ -44,17 +45,28 @@ class PemesananController extends Controller
 
                 'teknisi_user.nama as nama_teknisi',
                 'teknisi_user.foto_profile as foto_teknisi'
-            )
-            ->where('pemesanan.status_pekerjaan', 'selesai'); // ✅ cuma yang selesai
+            );
 
+        // Apply status filter: jika status spesifik dipilih, pakai where tunggal.
+        if ($status && $status !== 'all') {
+            $query->where('pemesanan.status_pekerjaan', $status);
+        } else {
+            // default: tampilkan kelompok status selesai + batal
+            $query->whereIn('pemesanan.status_pekerjaan', [
+                'selesai',
+                'selesai_pending_verifikasi',
+                'selesai_confirmed',
+                'batal'
+            ]);
+        }
 
         // Optional: search di admin
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('pemesanan.kode_pemesanan', 'like', "%$search%")
-                    ->orWhere('pelanggan.nama', 'like', "%$search%")
-                    ->orWhere('teknisi_user.nama', 'like', "%$search%")
-                    ->orWhere('keahlian.nama_keahlian', 'like', "%$search%");
+                  ->orWhere('pelanggan.nama', 'like', "%$search%")
+                  ->orWhere('teknisi_user.nama', 'like', "%$search%")
+                  ->orWhere('keahlian.nama_keahlian', 'like', "%$search%");
             });
         }
 
@@ -63,6 +75,27 @@ class PemesananController extends Controller
             ->paginate($entries)
             ->appends($request->except('page'));
 
-        return view('admin.pemesanan.selesai', compact('pemesanan', 'entries', 'search'));
+        // kirim juga 'status' ke view kalau kamu mau menggunakannya eksplisit
+        return view('admin.pemesanan.selesai', compact('pemesanan', 'entries', 'search', 'status'));
+    }
+
+    // proses refund pemesanan
+    public function refund(Request $request)
+    {
+        // Validasi
+        $request->validate([
+            'id_pemesanan' => 'required|exists:pemesanan,id_pemesanan',
+        ]);
+
+        // Update Database: hanya ubah status_pekerjaan saja (tidak menyentuh payment_status)
+        DB::table('pemesanan')
+            ->where('id_pemesanan', $request->id_pemesanan)
+            ->update([
+                'status_pekerjaan' => 'batal',
+                'updated_at'       => now(),
+            ]);
+
+        // Redirect kembali ke halaman sebelumnya (preserve query string seperti ?status=...&entries=...)
+        return redirect()->to(url()->previous())->with('success', 'Pesanan berhasil dibatalkan dan status diubah menjadi Batal.');
     }
 }

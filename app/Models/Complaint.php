@@ -24,6 +24,7 @@ class Complaint extends Model
         'metode_pembayaran',
         'nominal_id',
 
+        // 🔥 Tambahan baru
         'nomor_tujuan',
         'nama_tujuan',
 
@@ -34,84 +35,32 @@ class Complaint extends Model
         'admin_id',
     ];
 
+
     // ============================
     // 🔗 RELATIONS
     // ============================
 
+    // User yang membuat komplain
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'id_user');
     }
 
+    // Admin yang menangani komplain
     public function admin(): BelongsTo
     {
         return $this->belongsTo(User::class, 'admin_id', 'id_user');
     }
 
+    // Relasi ke pemesanan
     public function pemesanan(): BelongsTo
     {
         return $this->belongsTo(Pemesanan::class, 'pemesanan_id', 'id_pemesanan');
     }
 
+    // Relasi ke pembayaran
     public function pembayaran(): BelongsTo
     {
         return $this->belongsTo(Pembayaran::class, 'pembayaran_id', 'id_pembayaran');
-    }
-
-    // ============================
-    // ⭐ HELPER METHODS TAMBAHAN
-    // ============================
-
-    /**
-     * Cek apakah komplain ini punya pesanan terkait.
-     */
-    public function hasPemesanan(): bool
-    {
-        return $this->pemesanan !== null;
-    }
-
-    /**
-     * Ubah status pemesanan menjadi batal melalui model.
-     */
-    public function cancelPemesanan(): bool
-    {
-        if (! $this->pemesanan) {
-            return false;
-        }
-
-        return $this->pemesanan->update([
-            'status_pekerjaan' => 'batal'
-        ]);
-    }
-
-    /**
-     * Set balasan admin secara cepat.
-     */
-    public function setAdminResponse(?string $text = null): void
-    {
-        $this->update([
-            'admin_id'      => auth()->id(),
-            'balasan_admin' => $text ?? $this->balasan_admin,
-        ]);
-    }
-
-    // ============================
-    // ⭐ SCOPE (opsional)
-    // ============================
-
-    /**
-     * Filter hanya komplain kategori pemesanan.
-     */
-    public function scopeOrderComplaint($query)
-    {
-        return $query->where('kategori', 'pesanan');
-    }
-
-    /**
-     * Komplain yang masih status "baru".
-     */
-    public function scopeBaru($query)
-    {
-        return $query->where('status', 'baru');
     }
 }

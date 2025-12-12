@@ -29,12 +29,12 @@ class ComplaintController extends Controller
                       ->orWhere('deskripsi', 'like', "%{$search}%")
                       ->orWhere('kategori', 'like', "%{$search}%")
 
-                      // 🔎 Tambahan filter terkait pesanan & pembayaran
+                      // Tambahan filter terkait pesanan & pembayaran
                       ->orWhere('nomor_pesanan', 'like', "%{$search}%")
                       ->orWhere('metode_pembayaran', 'like', "%{$search}%")
                       ->orWhere('nominal_id', 'like', "%{$search}%")
 
-                      // 🔥 Tambahan baru: nomor & nama tujuan pembayaran
+                      // Tambahan baru: nomor & nama tujuan pembayaran
                       ->orWhere('nomor_tujuan', 'like', "%{$search}%")
                       ->orWhere('nama_tujuan', 'like', "%{$search}%");
                 })

@@ -132,12 +132,15 @@ class TeknisiController extends Controller
 
     public function searchTeknisi(Request $request)
     {
-        $search     = $request->query('search');
-        $kategori   = $request->query('kategori');
-        $lokasi     = $request->query('lokasi');
-        $sort       = $request->query('sort', 'rating');
-        $page       = (int)$request->query('page', 1);
-        $limit      = (int)$request->query('limit', 5);
+        $search          = $request->query('search');
+        $idKategori      = $request->query('id_kategori');
+        $idKeahlian      = $request->query('id_keahlian');
+        $minHarga        = $request->query('min_harga');
+        $maxHarga        = $request->query('max_harga');
+        $lokasi          = $request->query('lokasi');
+        $sort            = $request->query('sort', 'rating');
+        $page            = (int) $request->query('page', 1);
+        $limit           = (int) $request->query('limit', 5);
 
         $offset = ($page - 1) * $limit;
 
@@ -145,13 +148,9 @@ class TeknisiController extends Controller
             ->join('user', 'user.id_user', '=', 'teknisi.id_user')
             ->leftJoin('alamat', 'alamat.id_user', '=', 'user.id_user')
             ->join('keahlian_teknisi', 'keahlian_teknisi.id_teknisi', '=', 'teknisi.id_teknisi')
-            ->join('keahlian', 'keahlian.id_keahlian', '=', 'keahlian_teknisi.id_keahlian')
-            ->leftJoin('pemesanan', function ($join) {
-                $join->on('pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
-                    ->on('pemesanan.id_teknisi', '=', 'keahlian_teknisi.id_teknisi');
-            });
+            ->join('keahlian', 'keahlian.id_keahlian', '=', 'keahlian_teknisi.id_keahlian');
 
-        // 🔎 Filter pencarian
+        // 🔎 Search
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('user.nama', 'LIKE', "%$search%")
@@ -159,15 +158,32 @@ class TeknisiController extends Controller
             });
         }
 
-        if ($kategori && $kategori != 'Semua') {
-            $query->where('keahlian.nama_keahlian', 'LIKE', "%$kategori%");
+        // 🎯 Filter kategori utama
+        if ($idKategori) {
+            $query->where('keahlian.id_kategori', $idKategori);
         }
 
+        // 🎯 Filter subkategori / keahlian
+        if ($idKeahlian) {
+            $query->where('keahlian.id_keahlian', $idKeahlian);
+        }
+
+        // 💵 Filter harga minimum
+        if ($minHarga) {
+            $query->where('keahlian_teknisi.harga', '>=', $minHarga);
+        }
+
+        // 💵 Filter harga maksimum
+        if ($maxHarga) {
+            $query->where('keahlian_teknisi.harga', '<=', $maxHarga);
+        }
+
+        // 📍 Filter lokasi
         if ($lokasi) {
             $query->where('alamat.alamat_lengkap', 'LIKE', "%$lokasi%");
         }
 
-        // 🔢 Kolom yang diambil
+        // 🔢 Select data
         $query->select(
             'teknisi.id_teknisi',
             'user.nama',
@@ -184,33 +200,20 @@ class TeknisiController extends Controller
                 END AS gambar
             ')
         )
-        ->distinct()
-        ->groupBy(
-            'teknisi.id_teknisi',
-            'user.nama',
-            'alamat.alamat_lengkap',
-            'keahlian.id_keahlian',
-            'keahlian.nama_keahlian',
-            'teknisi.rating_avg',
-            'keahlian_teknisi.gambar_layanan',
-            'keahlian_teknisi.harga'
+        ->distinct();
 
-        );
-
-        // 🔽 Sorting aman
+        // 🔽 Sort
         switch ($sort) {
-            case 'rating':
-                $query->orderBy(DB::raw('COALESCE(teknisi.rating_avg, 0)'), 'DESC');
-                break;
             case 'harga':
                 $query->orderBy('harga', 'ASC');
                 break;
             default:
-                $query->orderBy('user.nama', 'ASC');
+                $query->orderBy('rating', 'DESC');
+                break;
         }
 
-        // 📊 Pagination manual
-        $count = $query->distinct('teknisi.id_teknisi')->count('teknisi.id_teknisi');
+        // 📊 Pagination
+        $count = $query->count();
         $data = $query->skip($offset)->take($limit)->get();
 
         return response()->json([
@@ -220,6 +223,7 @@ class TeknisiController extends Controller
             'data'         => $data
         ]);
     }
+
 
     public function getLayananDetail(Request $request)
     {
@@ -290,6 +294,17 @@ class TeknisiController extends Controller
                 'ulasan.rating'
             )
             ->get();
+        
+        // harga + deskripsi layanan
+        $keahlian = DB::table('keahlian_teknisi')
+            ->where('id_teknisi', $idTeknisi)
+            ->where('id_keahlian', $idKeahlian)
+            ->select('harga', 'deskripsi')
+            ->first();
+
+        $harga = $keahlian->harga ?? 0;
+        $deskripsi = $keahlian->deskripsi ?? "-";
+
 
 
         // jumlah pesanan
@@ -305,11 +320,12 @@ class TeknisiController extends Controller
 
         return response()->json([
             "nama" => $teknisi->nama,
+            "foto_profile" => $teknisi->foto_profile, 
             "rating" => $teknisi->rating,
             'harga' => $harga,
+            "deskripsi" => $deskripsi, 
             "gambar" => $gambar,
             "ulasan" => $ulasan,
-            "garansi" => 5,
             "lokasi" => $alamat ?? "Tidak terdapat alamat default",
             "total_pesanan" => $totalPemesanan
         ]);

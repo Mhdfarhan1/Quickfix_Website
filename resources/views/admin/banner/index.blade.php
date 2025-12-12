@@ -69,12 +69,26 @@
 
                         {{-- File Gambar --}}
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Gambar Banner *</label>
-                            <input type="file" name="gambar" id="bannerInput" accept="image/*"
-                                class="w-full border rounded-lg px-3 py-2 text-sm cursor-pointer focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
-                                required>
-                            <p class="text-[11px] text-gray-400 mt-1">Format: JPG, PNG, WEBP. Maks 5MB.</p>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Gambar Banner *</label>
+
+                            <!-- Dropzone-style upload -->
+                            <label for="bannerInput"
+                                class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50/60 cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition">
+
+                                <div id="previewContainer" class="hidden">
+                                    <img id="previewImage" class="w-full h-40 object-cover rounded-xl">
+                                </div>
+
+                                <div id="uploadIcon" class="flex flex-col items-center">
+                                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-600">Klik untuk unggah banner</p>
+                                    <span class="text-[11px] text-gray-400">Format JPG, PNG, WEBP • Max 5MB</span>
+                                </div>
+                            </label>
+
+                            <input type="file" name="gambar" id="bannerInput" accept="image/*" class="hidden" required>
                         </div>
+
                     </div>
 
                     {{-- PREVIEW --}}
@@ -82,7 +96,8 @@
                         <label class="block text-sm font-medium text-gray-700">Preview</label>
 
                         <div class="w-full h-32 md:h-40 rounded-xl border border-dashed border-gray-300 bg-gray-50 
-                                        flex items-center justify-center overflow-hidden" id="bannerPreviewWrapper">
+                                                flex items-center justify-center overflow-hidden"
+                            id="bannerPreviewWrapper">
                             <span id="bannerPreviewText" class="text-xs text-gray-400 text-center px-4">
                                 Pilih gambar untuk melihat preview banner di sini.
                             </span>
@@ -110,32 +125,35 @@
             </h2>
 
             @if($banners->isEmpty())
-                <div class="border border-dashed border-gray-300 rounded-xl py-10 text-center">
+                <div class="border border-dashed border-gray-300 rounded-xl py-10 text-center bg-gray-50/40">
                     <p class="text-sm text-gray-500 mb-1">Belum ada banner.</p>
                     <p class="text-xs text-gray-400">Tambah banner pertama Anda di atas.</p>
                 </div>
             @else
                 <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     @foreach($banners as $banner)
-                        <div class="border rounded-xl overflow-hidden shadow-sm bg-white group hover:shadow-lg transition">
+                        <div
+                            class="border rounded-xl overflow-hidden shadow-sm bg-white group hover:shadow-lg hover:border-blue-200 transition-all duration-200">
 
                             {{-- Thumbnail --}}
                             <div class="relative h-32 bg-gray-100">
-                                <img src="{{ asset('storage/' . $banner->gambar) }}" class="w-full h-full object-cover"
-                                    alt="banner">
+                                <img src="{{ asset('storage/' . $banner->gambar) }}"
+                                    class="w-full h-full object-cover group-hover:scale-[1.02] transition" alt="banner">
 
                                 {{-- Status --}}
-                                <div class="absolute top-2 left-2">
+                                <div class="absolute top-2 left-2 flex items-center gap-1.5">
                                     <span
-                                        class="px-2 py-0.5 rounded-full text-[11px] font-medium 
-                                                            {{ $banner->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600' }}">
+                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                                            {{ $banner->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600' }}">
+                                        <i
+                                            class="fa-solid {{ $banner->is_active ? 'fa-circle-check' : 'fa-circle-xmark' }} text-[10px]"></i>
                                         {{ $banner->is_active ? 'Aktif' : 'Nonaktif' }}
                                     </span>
                                 </div>
                             </div>
 
                             {{-- Content --}}
-                            <div class="p-3 flex flex-col gap-1">
+                            <div class="p-3 flex flex-col gap-1.5">
                                 <div class="font-semibold text-gray-800 text-sm line-clamp-2">
                                     {{ $banner->judul }}
                                 </div>
@@ -151,8 +169,9 @@
                                 @endif
 
                                 {{-- Footer --}}
-                                <div class="flex items-center justify-between mt-2 pt-1 border-t border-gray-100">
+                                <div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
                                     <span class="text-[10px] text-gray-400">
+                                        <i class="fa-regular fa-clock mr-1.5"></i>
                                         {{ $banner->created_at->format('d M Y') }}
                                     </span>
 
@@ -163,14 +182,12 @@
                                             @csrf
                                             @method('PATCH')
 
-                                            <button type="submit" class="px-3 py-1 text-[11px] rounded-lg
-                            {{ $banner->is_active
+                                            <button type="submit" class="px-3 py-1 text-[11px] rounded-lg inline-flex items-center gap-1.5
+                                                        {{ $banner->is_active
                         ? 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
                         : 'bg-green-50 text-green-700 hover:bg-green-100' }}">
-
                                                 <i
                                                     class="fa-solid {{ $banner->is_active ? 'fa-ban' : 'fa-check' }} text-[10px]"></i>
-
                                                 {{ $banner->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                                             </button>
                                         </form>
@@ -181,7 +198,7 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                class="px-3 py-1 text-[11px] rounded-lg bg-red-50 text-red-600 hover:bg-red-100 inline-flex items-center gap-1">
+                                                class="px-3 py-1 text-[11px] rounded-lg bg-red-50 text-red-600 hover:bg-red-100 inline-flex items-center gap-1.5">
                                                 <i class="fa-solid fa-trash-can text-[10px]"></i>
                                                 Hapus
                                             </button>
@@ -189,8 +206,6 @@
 
                                     </div>
                                 </div>
-
-
                             </div>
 
                         </div>
@@ -198,6 +213,7 @@
                 </div>
             @endif
         </div>
+
     </div>
 @endsection
 

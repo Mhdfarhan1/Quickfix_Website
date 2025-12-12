@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Services\Notify; // <-- pastikan ada
 
 class Pemesanan extends Model
 {
@@ -11,7 +12,7 @@ class Pemesanan extends Model
 
     protected $table = 'pemesanan';
     protected $primaryKey = 'id_pemesanan';
-    public $timestamps = true; // ✅ aktifkan agar created_at & updated_at otomatis terisi
+    public $timestamps = true;
 
     protected $fillable = [
         'kode_pemesanan',
@@ -20,7 +21,7 @@ class Pemesanan extends Model
         'id_keahlian',
         'id_alamat',
         'tanggal_booking',
-        'jam_booking',              // ✅ tambahkan karena ada di tabel
+        'jam_booking',
         'keluhan',
         'harga',
         'gross_amount',
@@ -30,12 +31,28 @@ class Pemesanan extends Model
         'midtrans_transaction_id',
         'payment_url',
         'snap_token',
+        // kolom escrow/verifikasi
+        'verifikasi_by_customer',
+        'verifikasi_at',
+        'payout_eligible_at',
+        'payout_released_at',
+        'dispute_id',
+        'refund_requested_at',
+        'visible_bukti_teknisi',
     ];
 
-    /**
-     * 🔹 Relasi ke tabel pengguna (pelanggan)
-     * Pastikan nama model User benar-benar menunjuk ke tabel 'users' atau 'pelanggan'
-     */
+    protected $casts = [
+        'verifikasi_by_customer' => 'boolean',
+        'verifikasi_at' => 'datetime',
+        'payout_eligible_at' => 'datetime',
+        'payout_released_at' => 'datetime',
+        'refund_requested_at' => 'datetime',
+        'visible_bukti_teknisi' => 'array',
+        'harga' => 'decimal:2',
+        'gross_amount' => 'decimal:2',
+    ];
+
+    // relations (sama seperti yang sudah ada)
     public function pelanggan()
     {
         return $this->belongsTo(User::class, 'id_pelanggan', 'id_user');
@@ -61,12 +78,23 @@ class Pemesanan extends Model
         return $this->hasMany(BuktiPekerjaan::class, 'id_pemesanan', 'id_pemesanan');
     }
 
+    public function payout()
+    {
+        return $this->hasOne(Payout::class, 'id_pemesanan', 'id_pemesanan');
+    }
+
+
+    public function dispute()
+    {
+        return $this->hasOne(Dispute::class, 'id_pemesanan', 'id_pemesanan');
+    }
+
     public function updateStatus($newStatus)
     {
         $this->status_pekerjaan = $newStatus;
         $this->save();
 
+        // gunakan method Notify yang ada: statusChanged or send
         Notify::statusChanged($this->id_pelanggan, $newStatus);
     }
-
 }

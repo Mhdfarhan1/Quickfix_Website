@@ -88,6 +88,7 @@ Route::middleware(['admin.auth'])->prefix('admin')->group(function () {
     // Route Pemesanan Selesai
     Route::get('pemesanan/selesai', [PemesananController::class, 'selesai'])
         ->name('admin.pemesanan.selesai');
+    Route::post('pemesanan/refund', [PemesananController::class, 'refund'])->name('admin.pemesanan.refund');
 
     // Route Pendapatan Admin
     Route::get('pendapatan', [PendapatanController::class, 'index'])
@@ -98,12 +99,33 @@ Route::middleware(['admin.auth'])->prefix('admin')->group(function () {
         ComplaintController::class,
         'index'
     ])->name('admin.complaints.index');
+
     Route::get('complaints/{complaint}', [
         ComplaintController::class,
         'show'
     ])->name('admin.complaints.show');
+
     Route::put('complaints/{complaint}', [
         ComplaintController::class,
         'update'
     ])->name('admin.complaints.update');
+
+    // Refund pesanan
+    Route::post('complaints/{complaint}/refund', [
+        ComplaintController::class,
+        'refund'
+    ])->name('admin.complaints.refund');
+
+    // Cancel pesanan
+    Route::post('complaints/{complaint}/cancel', [
+        ComplaintController::class,
+        'cancel'
+    ])->name('admin.complaints.cancel');
+});
+
+Route::middleware(['web', 'admin.auth'])->group(function () {
+    Route::post(
+        '/admin/payouts/{id}/simulate-success',
+        [App\Http\Controllers\Admin\AdminPayoutController::class, 'simulateSuccess']
+    )->name('admin.payouts.simulate_success');
 });

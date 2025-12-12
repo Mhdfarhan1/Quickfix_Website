@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Models\Pemesanan;
 use App\Services\Notify;
@@ -539,42 +540,65 @@ class TeknisiPesananController extends Controller
     {
         $user = $request->user();
 
+        Log::info("[SELESAIKAN] incoming request by user_id={$user->id_user} for order_id={$id}", $request->all());
+
+
+        // cari id_teknisi dari user
         $id_teknisi = DB::table('teknisi')
             ->where('id_user', $user->id_user)
             ->value('id_teknisi');
 
-        // Cek apakah sudah upload minimal 1 foto
+        // validasi teknisi ditemukan
+        if (!$id_teknisi) {
+            Log::warning("[SELESAIKAN] teknisi tidak ditemukan untuk user {$user->id_user}");
+            return response()->json(['status' => false, 'message' => 'Akun teknisi tidak ditemukan'], 404);
+        }
+
+        // Cek apakah ada bukti pekerjaan minimal 1 foto
         $adaBukti = DB::table('bukti_pekerjaan')
             ->where('id_pemesanan', $id)
+            ->where('id_teknisi', $id_teknisi)
             ->exists();
 
         if (!$adaBukti) {
+            Log::info("[SELESAIKAN] order {$id} oleh teknisi {$id_teknisi} gagal - belum ada bukti");
             return response()->json([
                 'status' => false,
                 'message' => 'Upload foto bukti dulu sebelum menyelesaikan pekerjaan'
             ], 400);
         }
 
-        DB::table('pemesanan')
-            ->where('id_pemesanan', $id)
+        // Ambil order via model supaya relasi & observer bekerja
+        $order = Pemesanan::where('id_pemesanan', $id)
             ->where('id_teknisi', $id_teknisi)
-            ->update([
-                'status_pekerjaan' => 'selesai',
-                'updated_at' => now()
-            ]);
-        
-        $pelangganId = DB::table('pemesanan')
-            ->where('id_pemesanan', $id)
-            ->value('id_pelanggan');
+            ->first();
 
-        Notify::statusChanged($pelangganId, 'selesai');
-        Notify::requestRating($pelangganId);
+        if (!$order) {
+            Log::warning("[SELESAIKAN] order {$id} tidak ditemukan atau bukan milik teknisi {$id_teknisi}");
+            return response()->json(['status' => false, 'message' => 'Order tidak ditemukan'], 404);
+        }
+
+        // Update status menjadi pending verifikasi pelanggan (ESCROW flow)
+        $order->status_pekerjaan = 'selesai_pending_verifikasi';
+        $order->updated_at = now();
+        $order->save();
+
+        Log::info("[SELESAIKAN] teknisi {$id_teknisi} menandai selesai untuk order {$id} (kode: {$order->kode_pemesanan})");
+
+        // Notifikasi ke pelanggan: pakai mapping statusChanged
+        Notify::statusChanged($order->id_pelanggan, 'selesai_pending_verifikasi');
+
+        // Optional: notify teknisi bahwa permintaan selesai terkirim
+        $techUserId = DB::table('teknisi')->where('id_teknisi', $id_teknisi)->value('id_user');
+        if ($techUserId) {
+            Notify::send($techUserId, 'Pengajuan Selesai Terkirim', "Pengajuan selesai untuk order {$order->kode_pemesanan} telah dikirim ke pelanggan untuk verifikasi.");
+        }
 
         return response()->json([
             'status' => true,
-            'message' => 'Pekerjaan telah diselesaikan'
+            'message' => 'Pekerjaan telah diajukan selesai dan menunggu konfirmasi pelanggan'
         ]);
-
     }
+
 
 }

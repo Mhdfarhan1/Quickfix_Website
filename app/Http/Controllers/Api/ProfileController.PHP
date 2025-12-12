@@ -48,6 +48,41 @@ class ProfileController extends Controller
         ]);
     }
 
+    public function update(Request $request)
+    {
+        // Pastikan user ter-auth
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        // Validasi input
+        $request->validate([
+            'nama'   => 'required|string|max:150',
+            'email'  => 'required|email|max:150|unique:user,email,' . $user->id_user . ',id_user',
+            'no_hp'  => 'nullable|string|max:30',
+        ]);
+
+        // Update
+        DB::table('user')->where('id_user', $user->id_user)
+            ->update([
+                'nama' => $request->nama,
+                'email' => $request->email,
+                'no_hp' => $request->no_hp,
+                'updated_at' => now(),
+            ]);
+
+        // Ambil data yang baru
+        $updated = DB::table('user')->where('id_user', $user->id_user)->first();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil berhasil diperbarui',
+            'data' => $updated,
+        ]);
+    }
+
+
 
     /* --------------------------------------------------
      * 🔹 BAGIAN 2 — GAMBAR LAYANAN TEKNISI

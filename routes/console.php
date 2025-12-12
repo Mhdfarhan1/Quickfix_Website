@@ -8,4 +8,14 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-app(Schedule::class)->command('db:backup')->hourly();
+// ambil instance Schedule
+$schedule = app(Schedule::class);
+
+// Example schedule
+$schedule->command('db:backup')->hourly();
+
+// Payout polling (jika pakai)
+$schedule->command('payouts:poll')->everyFiveMinutes()->withoutOverlapping();
+
+// Payout release (INI YANG BENAR)
+$schedule->command('payout:release')->everyFiveMinutes()->withoutOverlapping();

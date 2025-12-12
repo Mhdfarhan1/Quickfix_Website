@@ -30,6 +30,12 @@ use App\Http\Controllers\Api\KeranjangController;
 use App\Http\Controllers\Api\PasswordResetOtpController;
 use App\Http\Controllers\Api\TeknisiPesananController;
 use App\Http\Controllers\Api\VerifikasiTeknisiController;
+<<<<<<< HEAD
+=======
+use App\Http\Controllers\Teknisi\KeahlianTeknisiController;
+use App\Http\Controllers\API\FlipController;
+use App\Http\Controllers\API\PayoutController;
+>>>>>>> 177e692bd5961303776300ce6d08b78176876bfa
 
 /*
 |--------------------------------------------------------------------------
@@ -85,7 +91,10 @@ Route::middleware('auth:sanctum')->get('/get_pemesanan_by_user', [PemesananContr
 Route::middleware('auth:sanctum')->get('/pemesanan/{id}', [PemesananController::class, 'getPemesananById']);
 Route::middleware('auth:sanctum')->post('/cancel_pemesanan', [PemesananController::class, 'cancelPemesanan']);
 Route::post('/add_pemesanan', [PemesananController::class, 'addPemesanan']);
+// routes/api.php
+Route::middleware('auth:sanctum')->post('/pemesanan/{id}/batalkan', [PemesananController::class, 'batalkanPemesanan']);
 
+<<<<<<< HEAD
 /*
 |--------------------------------------------------------------------------
 | KERANJANG
@@ -102,6 +111,30 @@ Route::post('/keranjang/checkout', [KeranjangController::class, 'checkout']);
 | PROFILE
 |--------------------------------------------------------------------------
 */
+=======
+
+// ===============================
+// PROFILE
+// ===============================
+Route::middleware('auth:sanctum')->get('/profile', [ProfileController::class, 'show']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::put('/user/update', [ProfileController::class, 'update']);
+});
+
+// PROFILE & GAMBAR
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/upload_foto', [ProfileController::class, 'uploadFoto']);
+    Route::post('/upload_gambar_layanan', [ProfileController::class, 'uploadGambarLayanan']);
+    Route::delete('/hapus_gambar_layanan/{id}', [ProfileController::class, 'deleteGambarLayanan']);
+});
+
+// GAMBAR TEKNISI
+Route::get('/gambar_layanan/{id_teknisi}', [ProfileController::class, 'getGambarLayananByTeknisi']);
+Route::get('/teknisi/{id_teknisi}/gambar', [ProfileController::class, 'getGambarLayananByTeknisi']);
+
+Route::get('/bukti_pekerjaan/{id_teknisi}', [ProfileController::class, 'getBuktiPekerjaanByTeknisi']);
+>>>>>>> 177e692bd5961303776300ce6d08b78176876bfa
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
@@ -160,11 +193,30 @@ Route::post('/payment/notification', [PaymentController::class, 'handleNotificat
 Route::get('/payment/status', [PaymentController::class, 'checkStatus']);
 Route::get('/get_struk/{kode}', [PaymentController::class, 'getStruk']);
 
+<<<<<<< HEAD
 /*
 |--------------------------------------------------------------------------
 | PASSWORD RESET
 |--------------------------------------------------------------------------
 */
+=======
+// routes/api.php
+Route::middleware('auth:sanctum')->post('/payout/auto/{id}', [PayoutController::class, 'auto']);
+Route::post('/flip/callback/payout', [FlipController::class, 'payoutCallback']);
+Route::post('/payout/release', [PayoutController::class, 'release']);
+// routes/api.php
+Route::post('/flip/callback', [FlipCallbackController::class, 'handle']);
+
+Route::post('flip/callback', [PayoutController::class, 'flipCallback']);
+Route::post('/webhook/midtrans', [MidtransWebhookController::class, 'handle']);
+Route::get('orders/{kode}', [PaymentController::class, 'getOrder']);
+
+Route::post('orders/{kode}/technician/complete', [PaymentController::class, 'technicianComplete']);
+Route::post('orders/{kode}/customer/confirm', [PaymentController::class, 'customerConfirm']);
+Route::post('orders/{kode}/customer/request_refund', [PaymentController::class, 'customerRequestRefund']);
+Route::post('admin/orders/{kode}/process_refund', [PaymentController::class, 'adminProcessRefund']);
+
+>>>>>>> 177e692bd5961303776300ce6d08b78176876bfa
 
 Route::prefix('password')->group(function () {
     Route::post('/forgot', [PasswordResetOtpController::class, 'sendResetOtp']);

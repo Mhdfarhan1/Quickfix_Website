@@ -22,6 +22,13 @@ return [
         'key' => env('RESEND_KEY'),
     ],
 
+    'flip' => [
+        'secret'         => env('FLIP_SANDBOX_KEY'),   // pakai key sandbox yang sudah di .env
+        'base_url'       => env('FLIP_BASE_URI'),      // gunakan base uri yang ada
+        'callback_token' => env('FLIP_CALLBACK_TOKEN'),
+    ],
+
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

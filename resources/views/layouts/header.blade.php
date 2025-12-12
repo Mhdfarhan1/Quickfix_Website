@@ -18,7 +18,7 @@
     </div>
 
     <div class="flex items-center gap-4">
-        
+
 
         <!-- User Dropdown -->
         <div class="relative">
@@ -44,18 +44,23 @@
                         class="hidden absolute right-0 mt-2 w-48 bg-white shadow-xl rounded-xl py-2 border border-gray-100 z-20">
 
                         <a href="{{ route('admin.profile.show') }}"
-                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            Profil
+                            class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100/60 transition">
+                            <i class="fas fa-user text-gray-600 w-4 h-4"></i>
+                            <span>Profil</span>
                         </a>
 
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                            Pengaturan
+                        <a href="#"
+                            class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-100/60 transition">
+                            <i class="fas fa-cog text-gray-600 w-4 h-4"></i>
+                            <span>Pengaturan</span>
                         </a>
 
                         <form action="{{ route('admin.logout') }}" method="POST">
                             @csrf
-                            <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                Logout
+                            <button type="submit"
+                                class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition">
+                                <i class="fas fa-sign-out-alt text-red-600 w-4 h-4"></i>
+                                <span>Logout</span>
                             </button>
                         </form>
 

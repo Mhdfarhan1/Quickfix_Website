@@ -11,6 +11,8 @@ use Illuminate\Validation\ValidationException;
 use Midtrans\Snap;
 use Midtrans\Config;
 use Illuminate\Support\Facades\Log;
+use App\Services\Notify;
+
 
 class PemesananController extends Controller
 {
@@ -244,36 +246,155 @@ class PemesananController extends Controller
         }
     }
 
-    public function getKeranjang(Request $request)
+    public function batalkanPemesanan(Request $request, $id)
     {
-        $id_pelanggan = $request->query('id_pelanggan');
+        try {
+            $user = $request->user();
 
-        if (!$id_pelanggan) {
-            return response()->json(['status' => false, 'message' => 'id_pelanggan wajib diisi'], 400);
+            if (!$user) {
+                return response()->json(['status' => false, 'message' => 'Token tidak valid'], 401);
+            }
+
+            // Ambil pesanan
+            $pemesanan = DB::table('pemesanan')
+                ->where('id_pemesanan', $id)
+                ->first();
+
+            if (!$pemesanan) {
+                return response()->json(['status' => false, 'message' => 'Pemesanan tidak ditemukan'], 404);
+            }
+
+            // Pastikan yang membatalkan adalah pemilik (pelanggan)
+            if ($pemesanan->id_pelanggan != $user->id_user) {
+                return response()->json(['status' => false, 'message' => 'Anda tidak memiliki izin untuk membatalkan pesanan ini'], 403);
+            }
+
+            // Cek status yang diizinkan untuk dibatalkan
+            $boleh = in_array($pemesanan->status_pekerjaan, ['menunggu_diterima', 'dijadwalkan']);
+
+            if (!$boleh) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Pesanan tidak dapat dibatalkan pada status saat ini',
+                    'status_sekarang' => $pemesanan->status_pekerjaan
+                ], 400);
+            }
+
+            // Update status ke 'dibatalkan'
+            $updated = DB::table('pemesanan')
+                ->where('id_pemesanan', $id)
+                ->where('id_pelanggan', $user->id_user)
+                ->update([
+                    'status_pekerjaan' => 'batal',
+                    'updated_at' => now()
+                ]);
+
+            if (!$updated) {
+                return response()->json(['status' => false, 'message' => 'Gagal membatalkan pesanan'], 500);
+            }
+
+            // Load model untuk notifikasi / pengembalian data
+            $pemesananModel = Pemesanan::find($id);
+
+            // Notifikasi: beri tahu teknisi jika ada teknisi terkait
+            $idTeknisi = DB::table('pemesanan')->where('id_pemesanan', $id)->value('id_teknisi');
+            if ($idTeknisi) {
+                try {
+                    Notify::statusChanged($idTeknisi, 'batal');
+                } catch (\Exception $e) {
+                    Log::warning('Gagal kirim notifikasi ke teknisi: ' . $e->getMessage());
+                }
+            }
+
+            // Notifikasi ke pelanggan juga (opsional)
+            try {
+                Notify::statusChanged($user->id_user, 'batal');
+            } catch (\Exception $e) {
+                Log::warning('Gagal kirim notifikasi ke pelanggan: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Pesanan berhasil dibatalkan',
+                'data' => $pemesananModel
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('ERROR BATALKAN PESANAN: ' . $e->getMessage());
+            return response()->json(['status' => false, 'message' => 'Terjadi kesalahan server'], 500);
+        }
+    }
+
+    public function pelangganKonfirmasi(Request $request, $id)
+    {
+        $user = $request->user();
+
+        if ($user->role !== 'pelanggan') {
+            return response()->json(['status' => false, 'message' => 'Anda bukan pelanggan'], 403);
         }
 
-        $data = DB::table('pemesanan')
-            ->join('teknisi', 'pemesanan.id_teknisi', '=', 'teknisi.id_teknisi')
-            ->join('user as teknisi_user', 'teknisi.id_user', '=', 'teknisi_user.id_user')
-            ->join('keahlian', 'pemesanan.id_keahlian', '=', 'keahlian.id_keahlian')
-            ->where('pemesanan.id_pelanggan', $id_pelanggan)
-            ->where('pemesanan.status_pekerjaan', 'keranjang')
-            ->select(
-                'pemesanan.id_pemesanan',
-                'keahlian.nama_keahlian',
-                'pemesanan.harga',
-                'pemesanan.keluhan',
-                'teknisi_user.nama as nama_teknisi',
-                'teknisi.foto_teknisi'
-            )
-            ->get();
+        $p = Pemesanan::find($id);
+
+        if (!$p) {
+            return response()->json(['status' => false, 'message' => 'Pesanan tidak ditemukan'], 404);
+        }
+
+        if ($p->id_pelanggan != $user->id_user) {
+            return response()->json(['status' => false, 'message' => 'Anda tidak memiliki izin'], 403);
+        }
+
+        if ($p->status_pekerjaan !== 'selesai_pending_verifikasi') {
+            return response()->json(['status' => false, 'message' => 'Status tidak valid'], 400);
+        }
+
+        if (!in_array($p->payment_status, ['settlement', 'settled'])) {
+            return response()->json(['status' => false, 'message' => 'Pembayaran belum settled'], 400);
+        }
+
+        try {
+            // update verification
+            $p->status_pekerjaan = 'selesai_confirmed';
+            $p->verifikasi_by_customer = 1;
+            $p->verifikasi_at = now();
+            $p->payout_eligible_at = now();
+            $p->save();
+
+            // call payout service
+            $payout = app(\App\Services\PayoutService::class)->create($p);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Pekerjaan selesai. Payout akan diproses.',
+                'payout_id' => $payout->id
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Payout error: '.$e->getMessage());
+            return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function pelangganKomplain(Request $request, $id)
+    {
+        $user = $request->user();
+
+        $p = Pemesanan::find($id);
+        if (!$p) return response()->json(['status' => false, 'message' => 'Pesanan tidak ditemukan'], 404);
+
+        if ($p->status_pekerjaan !== 'menunggu_konfirmasi_pelanggan') {
+            return response()->json(['status' => false, 'message' => 'Tidak bisa komplain di status ini'], 400);
+        }
+
+        $p->status_pekerjaan = 'dispute';
+        $p->save();
 
         return response()->json([
             'status' => true,
-            'count' => $data->count(),
-            'data' => $data,
+            'message' => 'Komplain diajukan. Menunggu keputusan admin.'
         ]);
     }
+
+
 
     
 }

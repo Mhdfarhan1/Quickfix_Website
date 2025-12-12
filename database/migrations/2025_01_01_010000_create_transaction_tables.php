@@ -10,7 +10,7 @@ return new class extends Migration {
     {
         /**
          * =======================
-         * 1. PEMESANAN
+         * 1. PEMESANAN (updated)
          * =======================
          */
         Schema::create('pemesanan', function (Blueprint $table) {
@@ -36,22 +36,35 @@ return new class extends Migration {
             $table->string('payment_url', 255)->nullable();
             $table->string('snap_token', 100)->nullable();
 
-            // Status Pekerjaan
+            // Status Pekerjaan (extended)
             $table->enum('status_pekerjaan', [
                 'menunggu_diterima',
                 'dijadwalkan',
                 'menuju_lokasi',
                 'sedang_bekerja',
+                'selesai_pending_verifikasi',
+                'selesai_confirmed',
+                'perbaikan',
+                'in_dispute',
                 'selesai',
                 'batal'
             ])->default('menunggu_diterima');
 
-            // ✅ HAPUS after() karena bikin error di CREATE TABLE
+            // Escrow / verification fields
+            $table->boolean('verifikasi_by_customer')->nullable()->default(null)->comment('1 = customer confirmed');
+            $table->timestamp('verifikasi_at')->nullable();
+            $table->timestamp('payout_eligible_at')->nullable();
+            $table->timestamp('payout_released_at')->nullable();
+            $table->unsignedBigInteger('dispute_id')->nullable();
+            $table->timestamp('refund_requested_at')->nullable();
+            $table->text('visible_bukti_teknisi')->nullable(); // JSON array of URLs or metadata
+
+            // existing
             $table->timestamp('released_at')->nullable();
 
             $table->timestamps();
 
-            // ✅ Foreign Key
+            // Foreign Key
             $table->foreign('id_pelanggan')->references('id_user')->on('user')->onDelete('cascade');
             $table->foreign('id_teknisi')->references('id_teknisi')->on('teknisi')->onDelete('set null');
             $table->foreign('id_keahlian')->references('id_keahlian')->on('keahlian')->onDelete('cascade');
@@ -167,12 +180,54 @@ return new class extends Migration {
 
         /**
          * =======================
-         * 7. NOTIFIKASI
+         * 7. DISPUTES
          * =======================
+         */
+        Schema::create('disputes', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('id_pemesanan');
+            $table->enum('tipe', ['refund', 'complaint'])->default('refund');
+            $table->decimal('amount', 12, 2)->nullable();
+            $table->enum('status', ['open', 'customer_refunded', 'technician_repaid', 'resolved', 'rejected'])->default('open');
+            $table->text('notes')->nullable();
+            $table->timestamps();
 
-        
+            $table->foreign('id_pemesanan')
+                ->references('id_pemesanan')
+                ->on('pemesanan')
+                ->onDelete('cascade');
+        });
+
+        /**
          * =======================
-         * 8. ULASAN
+         * 8. PAYOUTS
+         * =======================
+         */
+        
+        Schema::create('payouts', function (Blueprint $table) {
+            $table->id();
+
+            $table->unsignedBigInteger('id_pemesanan');
+            $table->unsignedBigInteger('id_teknisi');
+
+            $table->string('reference_id')->unique();
+            $table->string('flip_id')->nullable();
+
+            $table->string('bank_code');
+            $table->string('account_number');
+            $table->string('account_name');
+
+            $table->integer('amount');
+
+            $table->string('status')->default('pending'); // pending, processing, success, failed
+            $table->longText('raw_response')->nullable();
+
+            $table->timestamps();
+        });
+
+        /**
+         * =======================
+         * 9. ULASAN
          * =======================
          */
         Schema::create('ulasan', function (Blueprint $table) {
@@ -195,6 +250,8 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('ulasan');
+        Schema::dropIfExists('payouts');
+        Schema::dropIfExists('disputes');
         Schema::dropIfExists('tracking_gps');
         Schema::dropIfExists('layanan_tambahan');
         Schema::dropIfExists('pembayaran');

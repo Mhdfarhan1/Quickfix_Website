@@ -107,3 +107,9 @@ Route::middleware(['admin.auth'])->prefix('admin')->group(function () {
         'update'
     ])->name('admin.complaints.update');
 });
+
+Route::middleware(['web', 'admin.auth'])->group(function () {
+    Route::post('/admin/payouts/{id}/simulate-success', 
+        [App\Http\Controllers\Admin\AdminPayoutController::class, 'simulateSuccess']
+    )->name('admin.payouts.simulate_success');
+});

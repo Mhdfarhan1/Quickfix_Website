@@ -28,6 +28,8 @@ use App\Http\Controllers\Api\PasswordResetOtpController;
 use App\Http\Controllers\Api\TeknisiPesananController;
 use App\Http\Controllers\Api\VerifikasiTeknisiController;
 use App\Http\Controllers\Teknisi\KeahlianTeknisiController;
+use App\Http\Controllers\API\FlipController;
+use App\Http\Controllers\API\PayoutController;
 
 
 
@@ -82,14 +84,9 @@ Route::middleware('auth:sanctum')->get('/get_pemesanan_by_user', [PemesananContr
 Route::middleware('auth:sanctum')->get('/pemesanan/{id}', [PemesananController::class, 'getPemesananById']);
 Route::middleware('auth:sanctum')->post('/cancel_pemesanan', [PemesananController::class, 'cancelPemesanan']);
 Route::post('/add_pemesanan', [PemesananController::class, 'addPemesanan']);
+// routes/api.php
+Route::middleware('auth:sanctum')->post('/pemesanan/{id}/batalkan', [PemesananController::class, 'batalkanPemesanan']);
 
-// ===============================
-// Keranjang
-// ===============================
-Route::get('/keranjang', [KeranjangController::class, 'getKeranjang']);
-Route::post('/keranjang/add', [KeranjangController::class, 'addKeranjang']);
-Route::delete('/keranjang/{id}', [KeranjangController::class, 'deleteKeranjang']);
-Route::post('/keranjang/checkout', [KeranjangController::class, 'checkout']);
 
 // ===============================
 // PROFILE
@@ -179,6 +176,22 @@ Route::get('/payment/status', [PaymentController::class, 'checkStatus']);
 
 // 🔹 Endpoint untuk ambil struk pembayaran (setelah sukses)
 Route::get('/get_struk/{kode}', [PaymentController::class, 'getStruk']);
+
+// routes/api.php
+Route::middleware('auth:sanctum')->post('/payout/auto/{id}', [PayoutController::class, 'auto']);
+Route::post('/flip/callback/payout', [FlipController::class, 'payoutCallback']);
+Route::post('/payout/release', [PayoutController::class, 'release']);
+// routes/api.php
+Route::post('/flip/callback', [FlipCallbackController::class, 'handle']);
+
+Route::post('flip/callback', [PayoutController::class, 'flipCallback']);
+Route::post('/webhook/midtrans', [MidtransWebhookController::class, 'handle']);
+Route::get('orders/{kode}', [PaymentController::class, 'getOrder']);
+
+Route::post('orders/{kode}/technician/complete', [PaymentController::class, 'technicianComplete']);
+Route::post('orders/{kode}/customer/confirm', [PaymentController::class, 'customerConfirm']);
+Route::post('orders/{kode}/customer/request_refund', [PaymentController::class, 'customerRequestRefund']);
+Route::post('admin/orders/{kode}/process_refund', [PaymentController::class, 'adminProcessRefund']);
 
 
 // ===============================

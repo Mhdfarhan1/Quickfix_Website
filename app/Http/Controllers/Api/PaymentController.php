@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -9,6 +10,11 @@ use App\Models\Pemesanan;
 use Midtrans\Config;
 use Midtrans\Snap;
 use App\Services\Notify;
+use App\Models\Dispute;
+use App\Models\Payout;
+use Carbon\Carbon;
+use Illuminate\Support\Str; 
+
 
 class PaymentController extends Controller
 {
@@ -136,6 +142,154 @@ class PaymentController extends Controller
         ]);
     }
 
+    public function technicianComplete(Request $request, $kode)
+    {
+        Log::info("[TECHNICIAN COMPLETE] incoming for kode: {$kode}", $request->all());
+
+        $order = Pemesanan::where('kode_pemesanan', $kode)->firstOrFail();
+
+        // simpan bukti (bisa berupa array URL)
+        $bukti = $request->input('bukti') ?? null;
+        if ($bukti) {
+            // pastikan menyimpan sebagai array (casts di model)
+            $order->visible_bukti_teknisi = json_encode($bukti);
+        }
+
+        // set status ke pending verifikasi (escrow)
+        $order->status_pekerjaan = 'selesai_pending_verifikasi';
+        $order->save();
+
+        Log::info("[TECHNICIAN COMPLETE] order {$order->kode_pemesanan} set to selesai_pending_verifikasi, bukti_count=" . ($bukti ? count((array)$bukti) : 0));
+
+        // notifikasi ke customer (pakai statusChanged agar pesan konsisten)
+        Notify::statusChanged($order->id_pelanggan, 'selesai_pending_verifikasi');
+
+        return response()->json(['status' => true, 'message' => 'Status updated to selesai_pending_verifikasi']);
+    }
+
+
+    public function customerConfirm(Request $request, $kode)
+    {
+        $order = Pemesanan::where('kode_pemesanan', $kode)->firstOrFail();
+
+        // ambil data verifikasi teknisi dari tabel verifikasi_teknisi
+        $verif = DB::table('verifikasi_teknisi')
+            ->where('id_teknisi', $order->id_teknisi)
+            ->first();
+
+        Log::info('VERIF DATA', (array) $verif);
+
+        if (!$verif || empty($verif->rekening) || empty($verif->bank)) {
+            Log::warning("Payout aborted: verifikasi teknisi tidak lengkap for order {$order->kode_pemesanan}");
+            return response()->json([
+                'status' => false,
+                'message' => 'Rekening teknisi belum terverifikasi atau data bank belum lengkap.'
+            ], 400);
+        }
+
+        // mapping/fallback nama kolom (sesuaikan jika DB-mu pakai nama lain)
+        $bank_code      = $verif->bank_code ?? $verif->bank ?? null;
+
+        // normalisasi => jika bank_code = "014" OK, tapi jika "BCA" ubah
+        if (!is_numeric($bank_code)) {
+            $bankMap = [
+                'BCA' => '014',
+                'BRI' => '002',
+                'BNI' => '009',
+                'MANDIRI' => '008',
+            ];
+            $bank_code = $bankMap[strtoupper($bank_code)] ?? null;
+        }
+
+        $account_number = $verif->rekening ?? $verif->account_no ?? null;
+        $account_name   = $verif->nama ?? $verif->account_name ?? null;
+
+        // hitung payout (adjust sesuai logika: gunakan total_bayar / harga)
+        $gross = $order->total_bayar ?? $order->harga ?? 0;
+        $payoutAmount = (int) round($gross * 0.95); // misal 95% ke teknisi
+
+        $referenceId = Str::uuid()->toString();
+        $idempotency = $referenceId; // deterministic: reuse this for retries
+
+        $remark = "Pembayaran teknisi";
+
+        $payload = [
+            'id_pemesanan'    => $order->id_pemesanan,
+            'id_teknisi'      => $order->id_teknisi,
+            'status'          => 'pending',
+            'reference_id'    => $referenceId,
+            'idempotency_key' => $idempotency,
+            'bank_code'       => $bank_code,
+            'account_number'  => $account_number,
+            'account_name'    => $account_name,
+            'amount'          => $payoutAmount,
+            'remark'        => $remark,
+        ];
+
+        Log::info('PAYOUT CREATE PAYLOAD', $payload);
+
+        // create + update inside transaction
+        try {
+            DB::beginTransaction();
+
+            // create payout (will include idempotency_key column)
+            $payout = Payout::create($payload);
+
+            // update order: set pelanggan sudah verifikasi and schedule payout_eligible_at
+            $order->verifikasi_by_customer = 1;
+            $order->verifikasi_at = now();
+            $order->payout_eligible_at = Carbon::now()->addHours(72);
+            $order->status_pekerjaan = 'selesai_confirmed';
+            $order->save();
+
+            DB::commit();
+
+            // notify teknisi
+            Notify::technicianWorkConfirmed($order->id_teknisi);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Terima kasih, pekerjaan dikonfirmasi. Dana akan dilepas setelah jendela verifikasi.',
+                'data' => $payout
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Payout/create or order update failed: ' . $e->getMessage(), [
+                'order_id' => $order->id_pemesanan,
+                'payload' => $payload
+            ]);
+            return response()->json([
+                'status' => false,
+                'message' => 'Terjadi kesalahan saat memproses konfirmasi. ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function customerRequestRefund(Request $request, $kode)
+    {
+        $order = Pemesanan::where('kode_pemesanan', $kode)->firstOrFail();
+
+        // buat record dispute
+        $dispute = Dispute::create([
+            'id_pemesanan' => $order->id_pemesanan,
+            'tipe' => 'refund',
+            'amount' => $request->input('amount') ?? $order->gross_amount,
+            'status' => 'open',
+            'notes' => $request->input('notes') ?? null,
+        ]);
+
+        $order->status_pekerjaan = 'in_dispute';
+        $order->dispute_id = $dispute->id;
+        $order->refund_requested_at = now();
+        $order->save();
+
+        // blokir payout (cron/job harus cek status dispute sebelum release)
+        Notify::sendToAdmin("Refund requested for order {$order->kode_pemesanan}");
+        Notify::sendToTechnician($order->id_teknisi, "Ada permintaan refund. Silakan menanggapi atau hubungi admin.");
+
+        return response()->json(['status' => true, 'message' => 'Permintaan refund diterima, tim kami akan menindaklanjuti.']);
+    }
+
     /**
      * 🔹 Ambil data struk pembayaran
      */
@@ -163,4 +317,26 @@ class PaymentController extends Controller
             ],
         ]);
     }
+
+    public function getOrder($kode)
+    {
+        \Log::info("[GET ORDER] request for kode: {$kode}");
+
+        $order = Pemesanan::with(['pelanggan','teknisi.user','alamat','keahlian','buktiPekerjaan','payouts','dispute'])
+            ->where('kode_pemesanan', $kode)
+            ->first();
+
+        if (!$order) {
+            \Log::warning("[GET ORDER] order not found: {$kode}");
+            return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        \Log::info("[GET ORDER] returning order", ['kode' => $kode, 'status' => $order->status_pekerjaan]);
+
+        return response()->json([
+            'status' => true,
+            'data' => $order->toArray()
+        ]);
+    }
+
 }

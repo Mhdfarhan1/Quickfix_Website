@@ -4,8 +4,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\HandleCors;
-use App\Http\Middleware\RoleMiddleware; // 🔹 tambahkan ini
-
+use App\Http\Middleware\RoleMiddleware;
+use Illuminate\Console\Scheduling\Schedule; // 🔹 WAJIB
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,18 +17,25 @@ return Application::configure(basePath: dirname(__DIR__))
         // CORS middleware global
         $middleware->append(HandleCors::class);
 
-        // 🔹 Daftarkan middleware custom Role
+        // Alias middleware
         $middleware->alias([
             'role' => RoleMiddleware::class,
             'admin.auth' => \App\Http\Middleware\AdminAuth::class,
-            
         ]);
 
         $middleware->append(\App\Http\Middleware\AuditRequest::class);
-
-        // Kamu juga bisa daftarkan middleware lain di sini bila perlu
-        // $middleware->append(\App\Http\Middleware\TrustProxies::class);
     })
+
+    // 🔹🔹🔹 TAMBAHKAN BAGIAN INI 🔹🔹🔹
+    ->withSchedule(function (Schedule $schedule) {
+        // Menjalankan auto payout setiap 1 jam
+        $schedule->command('payouts:release')->hourly();
+
+        // Jika ingin test:
+        // $schedule->command('payouts:release')->everyMinute();
+    })
+    // 🔹🔹🔹 END SCHEDULER BLOCK 🔹🔹🔹
+
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })

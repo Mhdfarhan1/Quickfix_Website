@@ -91,4 +91,50 @@ class PendapatanController extends Controller
             'search',
         ));
     }
+
+    public function adminProcessRefund(Request $request, $kode)
+    {
+        $order = Pemesanan::where('kode_pemesanan', $kode)->firstOrFail();
+        if (!$order->midtrans_transaction_id) {
+            return response()->json(['status' => false, 'message' => 'Transaksi Midtrans tidak tersedia.']);
+        }
+
+        // jika payout sudah dilepas ke teknisi -> tolak otomatis (atau minta solusi manual)
+        if ($order->payout_released_at) {
+            return response()->json(['status' => false, 'message' => 'Dana sudah dicairkan ke teknisi. Proses refund harus ditangani manual.']);
+        }
+
+        // panggil Midtrans Refund (contoh via HTTP POST)
+        $serverKey = config('midtrans.server_key');
+        $transactionId = $order->midtrans_transaction_id;
+
+        $payload = [
+        'refund_key' => 'refund-'.time(),
+        'amount' => (float) ($request->input('amount') ?? $order->gross_amount),
+        'reason' => $request->input('reason') ?? 'Refund by marketplace'
+        ];
+
+        $response = Http::withBasicAuth($serverKey, '')
+            ->post("https://api.midtrans.com/v2/{$transactionId}/refund", $payload);
+
+        if ($response->successful()) {
+            // update DB
+            $order->payment_status = 'failed'; // atau 'refund' kalau mau tambahkan enum
+            $order->save();
+
+            // update dispute record if exists
+            if ($order->dispute_id) {
+                $d = Dispute::find($order->dispute_id);
+                if ($d) {
+                    $d->status = 'customer_refunded';
+                    $d->save();
+                }
+            }
+
+            return response()->json(['status' => true, 'message' => 'Refund processed', 'data' => $response->json()]);
+        } else {
+            return response()->json(['status' => false, 'message' => 'Refund failed', 'detail' => $response->body()], 500);
+        }
+    }
+
 }

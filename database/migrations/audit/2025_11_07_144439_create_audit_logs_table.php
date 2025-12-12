@@ -32,10 +32,19 @@ return new class extends Migration
 
             $table->index(['route', 'ip_address', 'created_at'], 'audit_forensic_idx');
         });
+
+        Schema::connection('audit')->create('payout_logs', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('payout_id');
+            $table->string('status');
+            $table->text('payload')->nullable();
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
         Schema::connection('audit')->dropIfExists('audit_logs');
+        Schema::connection('audit')->dropIfExists('payout_logs');
     }
 };

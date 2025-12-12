@@ -21,7 +21,7 @@ class BannerController extends Controller
         $data = $request->validate([
             'judul' => ['required', 'string', 'max:255'],
             'link'  => ['nullable', 'url'],
-            'gambar' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'gambar' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5048'],
         ]);
 
         // simpan file ke storage/app/public/banner

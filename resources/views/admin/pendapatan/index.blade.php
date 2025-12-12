@@ -52,8 +52,8 @@
         <form method="GET" class="mt-6 mb-4 flex items-center justify-between gap-3 flex-wrap">
             <div class="relative">
                 <select name="entries" onchange="this.form.submit()" class="appearance-none border border-gray-300 rounded-xl bg-white text-sm px-4 py-2 pr-10
-                                       shadow-sm hover:border-blue-400 focus:border-blue-500 focus:ring focus:ring-blue-200/40
-                                       transition-all cursor-pointer font-medium">
+                                           shadow-sm hover:border-blue-400 focus:border-blue-500 focus:ring focus:ring-blue-200/40
+                                           transition-all cursor-pointer font-medium">
                     <option value="5" {{ request('entries', $entries) == 5 ? 'selected' : '' }}>5</option>
                     <option value="10" {{ request('entries', $entries) == 10 ? 'selected' : '' }}>10</option>
                     <option value="25" {{ request('entries', $entries) == 25 ? 'selected' : '' }}>25</option>
@@ -161,7 +161,7 @@
                 @endphp
 
                 <a href="{{ $paginator->previousPageUrl() ?: '#' }}" class="px-3 py-1 rounded-lg border text-xs
-                                      {{ $paginator->onFirstPage()
+                                          {{ $paginator->onFirstPage()
         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
         : 'bg-white hover:bg-gray-100' }}">
                     Previous
@@ -175,7 +175,7 @@
                 </span>
 
                 <a href="{{ $paginator->hasMorePages() ? $paginator->nextPageUrl() : '#' }}" class="px-3 py-1 rounded-lg border text-xs
-                                      {{ $paginator->hasMorePages()
+                                          {{ $paginator->hasMorePages()
         ? 'bg-white hover:bg-gray-100'
         : 'bg-gray-100 text-gray-400 cursor-not-allowed' }}">
                     Next

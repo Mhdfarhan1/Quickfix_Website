@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Notifikasi;
 use Pusher\Pusher;
+use App\Models\User;
 
 class Notify
 {
@@ -117,6 +118,39 @@ class Notify
             "Sengketa Selesai",
             "Sengketa pesanan telah diselesaikan oleh admin."
         );
+    }
+
+    public static function sendToAdmin($message, $title = "Notifikasi Admin")
+    {
+        // jika kamu punya id_user admin tunggal (mis. 1), gunakan itu.
+        // Atau bila Notifikasi.id_user nullable, bisa pakai null/0 dan gunakan channel admin.
+        $adminUserId = config('app.admin_user_id', null); // set di config/app.php kalau mau
+
+        Notifikasi::create([
+            'id_user' => $adminUserId, // atau null
+            'judul'   => $title,
+            'pesan'   => $message,
+            'tipe'    => 'admin'
+        ]);
+
+        $pusher = new Pusher(
+            env('PUSHER_APP_KEY'),
+            env('PUSHER_APP_SECRET'),
+            env('PUSHER_APP_ID'),
+            ['cluster' => env('PUSHER_APP_CLUSTER')]
+        );
+
+        // Trigger ke channel admin (mis: notifikasi.admin)
+        $pusher->trigger("notifikasi.admin", 'new-notification', [
+            'judul' => $title,
+            'pesan' => $message,
+        ]);
+    }
+
+    public static function sendToTechnician($techUserId, $message, $title = "Notifikasi Teknisi")
+    {
+        // re-use send() yang sudah ada supaya logika simpan/pusher konsisten
+        return self::send($techUserId, $title, $message);
     }
 
     /**

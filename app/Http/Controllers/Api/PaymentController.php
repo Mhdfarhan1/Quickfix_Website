@@ -284,8 +284,11 @@ class PaymentController extends Controller
         $order->save();
 
         // blokir payout (cron/job harus cek status dispute sebelum release)
-        Notify::sendToAdmin("Refund requested for order {$order->kode_pemesanan}");
-        Notify::sendToTechnician($order->id_teknisi, "Ada permintaan refund. Silakan menanggapi atau hubungi admin.");
+        // Kirim ke channel admin via judul + pesan (gunakan id admin jika ada)
+        Notify::send(null, "Permintaan Refund", "Refund requested for order {$order->kode_pemesanan}");
+
+        // Kirim ke teknisi
+        Notify::send($order->id_teknisi, "Permintaan Refund", "Ada permintaan refund. Silakan menanggapi atau hubungi admin.");
 
         return response()->json(['status' => true, 'message' => 'Permintaan refund diterima, tim kami akan menindaklanjuti.']);
     }

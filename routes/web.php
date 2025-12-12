@@ -98,12 +98,26 @@ Route::middleware(['admin.auth'])->prefix('admin')->group(function () {
         ComplaintController::class,
         'index'
     ])->name('admin.complaints.index');
+
     Route::get('complaints/{complaint}', [
         ComplaintController::class,
         'show'
     ])->name('admin.complaints.show');
+
     Route::put('complaints/{complaint}', [
         ComplaintController::class,
         'update'
     ])->name('admin.complaints.update');
+
+    // Refund pesanan
+    Route::post('complaints/{complaint}/refund', [
+        ComplaintController::class,
+        'refund'
+    ])->name('admin.complaints.refund');
+
+    // Cancel pesanan
+    Route::post('complaints/{complaint}/cancel', [
+        ComplaintController::class,
+        'cancel'
+    ])->name('admin.complaints.cancel');
 });

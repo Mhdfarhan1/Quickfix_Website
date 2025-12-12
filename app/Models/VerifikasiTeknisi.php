@@ -10,18 +10,29 @@ class VerifikasiTeknisi extends Model
 
     protected $fillable = [
         'id_teknisi',
-        'alamat',
+        
+        // Identitas
+        'nik',
+        'nama',
+
+        // Rekening
+        'rekening',
+        'bank',
+
+        // Wilayah
         'provinsi',
         'kabupaten',
         'kecamatan',
-        'nik',
-        'nama',
-        'rekening',
-        'bank',
+
+        // File upload
         'foto_ktp',
         'foto_skck',
         'buku_tabungan',
-        'skck_expired',
+
+        // Status SKCK (baru)
+        'skck_status',
+
+        // Status verifikasi
         'status',
     ];
 }

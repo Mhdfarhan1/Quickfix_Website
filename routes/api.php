@@ -1,11 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Response;
 
 /*
 |--------------------------------------------------------------------------
@@ -211,6 +207,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware('auth:sanctum')->post('/verifikasi-teknisi', [VerifikasiTeknisiController::class, 'store']);
 Route::middleware('auth:sanctum')->get('/teknisi/verifikasi/status', [VerifikasiTeknisiController::class, 'status']);
+
+/*
+|--------------------------------------------------------------------------
+| UPLOAD & OCR KTP
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/scan-ktp', [VerifikasiTeknisiController::class, 'scanKTP']); // <- endpoint OCR KTP
 
 /*
 |--------------------------------------------------------------------------

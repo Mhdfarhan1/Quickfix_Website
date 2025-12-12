@@ -5,63 +5,131 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\VerifikasiTeknisi;
+use Illuminate\Support\Facades\Log;
 
 class VerifikasiTeknisiController extends Controller
 {
+    /**
+     * ============================================
+     * 1. SIMPAN VERIFIKASI TEKNISI (FINAL)
+     * ============================================
+     */
     public function store(Request $request)
     {
+        Log::info("== MULAI VERIFIKASI TEKNISI ==");
+
+        // Cek user login via Sanctum
         $user = $request->user();
+        if (!$user) {
+            Log::error("User tidak terautentikasi!");
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated',
+            ], 401);
+        }
 
-        $validated = $request->validate([
-            'alamat'        => 'required|string',
-            'provinsi'      => 'required|string',
-            'kabupaten'     => 'required|string',
-            'kecamatan'     => 'required|string',
+        /**
+         * ============================
+         * VALIDASI (HARUS SAMA DENGAN FLUTTER)
+         * ============================
+         */
+        $request->validate([
+            'provinsi'           => 'required|string',
+            'kabupaten'          => 'required|string',
+            'kecamatan'          => 'required|string',
 
-            'nik'           => 'nullable|string',
-            'nama'          => 'nullable|string',
-            'rekening'      => 'nullable|string',
-            'bank'          => 'nullable|string',
-            'skck_expired'  => 'nullable|date',
+            'nik'                => 'required|string',
+            'rekening'           => 'required|string',
+            'bank'               => 'required|string',
+            'bank_code'          => 'required|string',
+            'nama_akun_rekening' => 'required|string',
 
-            'ktp'           => 'required|file|mimes:jpg,png,jpeg',
-            'skck'          => 'required|file|mimes:jpg,png,jpeg',
-            'buku_tabungan' => 'required|file|mimes:jpg,png,jpeg',
+            'ktp'                => 'required|file|mimes:jpg,png,jpeg',
+            'skck'               => 'required|file|mimes:jpg,png,jpeg',
         ]);
 
+        Log::info("DATA YANG MASUK", $request->all());
+
+        /**
+         * ============================
+         * SIMPAN DATA KE DATABASE
+         * ============================
+         */
         $ver = new VerifikasiTeknisi();
-        $ver->id_teknisi   = $user->id;
+        $teknisi = $request->user()->teknisi;
+        if (!$teknisi) {
+            return response()->json([
+                'success' => false,
+                'message' => 'user belum terdaftar sebagai teknisi'
+            ], 403);
+        }
+        $ver->id_teknisi = $teknisi->id_teknisi;
 
-        $ver->nik          = $request->nik;
-        $ver->nama         = $request->nama;
-        $ver->alamat       = $request->alamat;
-        $ver->provinsi     = $request->provinsi;
-        $ver->kabupaten    = $request->kabupaten;
-        $ver->kecamatan    = $request->kecamatan;
+        // Data identitas
+        $ver->nik  = $request->nik;
+        // Nama teknisi diambil dari nama pemilik rekening
+        $ver->nama = $request->nama_akun_rekening;
 
-        $ver->rekening     = $request->rekening;
-        $ver->bank         = $request->bank;
-        $ver->skck_expired = $request->skck_expired;
+        // Wilayah
+        $ver->provinsi  = $request->provinsi;
+        $ver->kabupaten = $request->kabupaten;
+        $ver->kecamatan = $request->kecamatan;
 
+        // Data rekening
+        $ver->rekening               = $request->rekening;
+        $ver->bank                   = $request->bank;
+        $ver->bank_code              = $request->bank_code;
+        $ver->account_name_verified  = $request->nama_akun_rekening;
+
+        /**
+         * ============================
+         * UPLOAD FILE
+         * ============================
+         */
         if ($request->hasFile('ktp')) {
             $ver->foto_ktp = $request->file('ktp')->store('verifikasi', 'public');
+            Log::info("UPLOAD KTP OK", ['path' => $ver->foto_ktp]);
         }
 
         if ($request->hasFile('skck')) {
             $ver->foto_skck = $request->file('skck')->store('verifikasi', 'public');
+            Log::info("UPLOAD SKCK OK", ['path' => $ver->foto_skck]);
         }
 
-        if ($request->hasFile('buku_tabungan')) {
-            $ver->buku_tabungan = $request->file('buku_tabungan')->store('verifikasi', 'public');
-        }
-
+        // Status default
         $ver->status = 'pending';
         $ver->save();
+
+        Log::info("VERIFIKASI TERSIMPAN", ['id' => $ver->id]);
 
         return response()->json([
             'success' => true,
             'message' => 'Verifikasi teknisi berhasil disimpan.',
-            'data'    => $ver
+            'data'    => $ver,
         ], 201);
+    }
+
+    /**
+     * ============================================
+     * 2. STATUS VERIFIKASI TEKNISI
+     * ============================================
+     */
+    public function status(Request $request)
+    {
+        $user = $request->user();
+
+        $teknisi = $request->user()->teknisi;
+
+        $ver = VerifikasiTeknisi::where('id_teknisi', $teknisi->id_teknisi)->first();
+        if (!$ver) {
+            return response()->json([
+                'status' => 'belum_verifikasi',
+            ]);
+        }
+
+        return response()->json([
+            'status' => $ver->status,
+            'data'   => $ver,
+        ]);
     }
 }

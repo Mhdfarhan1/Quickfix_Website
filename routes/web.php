@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\ComplaintController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PemesananController;
 use App\Http\Controllers\Admin\PendapatanController;
+use App\Http\Controllers\Admin\AdminPayoutController;
+use App\Http\Controllers\Admin\AdminVerifikasiController;
 use App\Http\Controllers\Admin\AdminProfileController; // ⬅️ TAMBAHAN
 
 // Halaman landing
@@ -57,6 +59,29 @@ Route::middleware(['admin.auth'])->prefix('admin')->group(function () {
         ->name('admin.teknisi.verify');
     Route::get('teknisi/delete/{id}', [TeknisiController::class, 'destroy'])
         ->name('admin.teknisi.destroy');
+
+    // Route Verifikasi Teknisi
+    // 1. Menampilkan Daftar Pending
+    Route::get('/verifikasi', [AdminVerifikasiController::class, 'index'])
+        ->name('admin.verifikasi.index');
+
+    // 2. Melihat Detail (Foto KTP, dll)
+    Route::get('/verifikasi/{id}', [AdminVerifikasiController::class, 'show'])
+        ->name('admin.verifikasi.show');
+
+    // 3. Proses Terima / Tolak
+    // Menggunakan POST karena mengirim data form (action=terima/tolak)
+    Route::post('/verifikasi/{id}/update', [AdminVerifikasiController::class, 'update'])
+        ->name('admin.verifikasi.update');
+
+    // 4. Hapus Pengajuan (Destroy)
+    // Menggunakan DELETE sesuai standar
+    Route::delete('/verifikasi/{id}', [AdminVerifikasiController::class, 'destroy'])
+        ->name('admin.verifikasi.destroy');
+
+    // route notifikasi skck teknisi
+    Route::post('/verifikasi/{id}/notify-skck', [AdminVerifikasiController::class, 'notifySkck'])
+        ->name('admin.verifikasi.notifySkck');
 
     // Route Pengguna
     Route::get('user', [UserController::class, 'index'])
@@ -110,22 +135,20 @@ Route::middleware(['admin.auth'])->prefix('admin')->group(function () {
         'update'
     ])->name('admin.complaints.update');
 
-    // Refund pesanan
     Route::post('complaints/{complaint}/refund', [
         ComplaintController::class,
         'refund'
     ])->name('admin.complaints.refund');
-
-    // Cancel pesanan
     Route::post('complaints/{complaint}/cancel', [
         ComplaintController::class,
         'cancel'
     ])->name('admin.complaints.cancel');
-});
 
-Route::middleware(['web', 'admin.auth'])->group(function () {
+
+
+    // Route Simulasi Payout Success
     Route::post(
-        '/admin/payouts/{id}/simulate-success',
-        [App\Http\Controllers\Admin\AdminPayoutController::class, 'simulateSuccess']
+        'payouts/{id}/simulate-success',
+        [AdminPayoutController::class, 'simulateSuccess']
     )->name('admin.payouts.simulate_success');
 });

@@ -11,17 +11,16 @@ class VerifikasiTeknisiController extends Controller
 {
     /**
      * ============================================
-     * 1. SIMPAN VERIFIKASI TEKNISI (FINAL)
+     * 1. SIMPAN VERIFIKASI TEKNISI
      * ============================================
      */
     public function store(Request $request)
     {
         Log::info("== MULAI VERIFIKASI TEKNISI ==");
 
-        // Cek user login via Sanctum
+        // 🔐 User login (Sanctum)
         $user = $request->user();
         if (!$user) {
-            Log::error("User tidak terautentikasi!");
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated',
@@ -38,48 +37,59 @@ class VerifikasiTeknisiController extends Controller
             'kabupaten'          => 'required|string',
             'kecamatan'          => 'required|string',
 
-            'nik'                => 'required|string',
+            'nik'                => 'required|string|digits:16',
             'rekening'           => 'required|string',
             'bank'               => 'required|string',
             'bank_code'          => 'required|string',
             'nama_akun_rekening' => 'required|string',
 
-            'ktp'                => 'required|file|mimes:jpg,png,jpeg',
-            'skck'               => 'required|file|mimes:jpg,png,jpeg',
+            // ✅ TAMBAHAN
+            'skck_expired'       => 'required|date|after_or_equal:today',
+
+            'ktp'                => 'required|file|mimes:jpg,jpeg,png',
+            'skck'               => 'required|file|mimes:jpg,jpeg,png',
         ]);
 
         Log::info("DATA YANG MASUK", $request->all());
 
         /**
          * ============================
-         * SIMPAN DATA KE DATABASE
+         * CEK TEKNISI
          * ============================
          */
-        $ver = new VerifikasiTeknisi();
-        $teknisi = $request->user()->teknisi;
+        $teknisi = $user->teknisi;
         if (!$teknisi) {
             return response()->json([
                 'success' => false,
-                'message' => 'user belum terdaftar sebagai teknisi'
+                'message' => 'User belum terdaftar sebagai teknisi'
             ], 403);
         }
+
+        /**
+         * ============================
+         * SIMPAN DATA
+         * ============================
+         */
+        $ver = new VerifikasiTeknisi();
         $ver->id_teknisi = $teknisi->id_teknisi;
 
-        // Data identitas
-        $ver->nik  = $request->nik;
-        // Nama teknisi diambil dari nama pemilik rekening
-        $ver->nama = $request->nama_akun_rekening;
+        // Identitas
+        $ver->nik   = $request->nik;
+        $ver->nama  = $request->nama_akun_rekening;
 
         // Wilayah
         $ver->provinsi  = $request->provinsi;
         $ver->kabupaten = $request->kabupaten;
         $ver->kecamatan = $request->kecamatan;
 
-        // Data rekening
-        $ver->rekening               = $request->rekening;
-        $ver->bank                   = $request->bank;
-        $ver->bank_code              = $request->bank_code;
-        $ver->account_name_verified  = $request->nama_akun_rekening;
+        // Rekening
+        $ver->rekening              = $request->rekening;
+        $ver->bank                  = $request->bank;
+        $ver->bank_code             = $request->bank_code;
+        $ver->account_name_verified = $request->nama_akun_rekening;
+
+        // ✅ TANGGAL BERLAKU SKCK
+        $ver->skck_expired = $request->skck_expired;
 
         /**
          * ============================
@@ -117,10 +127,10 @@ class VerifikasiTeknisiController extends Controller
     public function status(Request $request)
     {
         $user = $request->user();
-
-        $teknisi = $request->user()->teknisi;
+        $teknisi = $user->teknisi;
 
         $ver = VerifikasiTeknisi::where('id_teknisi', $teknisi->id_teknisi)->first();
+
         if (!$ver) {
             return response()->json([
                 'status' => 'belum_verifikasi',

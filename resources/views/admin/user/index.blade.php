@@ -24,8 +24,8 @@
             {{-- Entries --}}
             <div class="relative">
                 <select name="entries" onchange="this.form.submit()" class="appearance-none border border-gray-300 rounded-xl bg-white text-sm px-4 py-2 pr-10
-                               shadow-sm hover:border-blue-400 focus:border-blue-500 focus:ring focus:ring-blue-200/40
-                               transition-all cursor-pointer font-medium">
+                                   shadow-sm hover:border-blue-400 focus:border-blue-500 focus:ring focus:ring-blue-200/40
+                                   transition-all cursor-pointer font-medium">
                     <option value="5" {{ request('entries', $entries ?? 10) == 5 ? 'selected' : '' }}>5</option>
                     <option value="10" {{ request('entries', $entries ?? 10) == 10 ? 'selected' : '' }}>10</option>
                     <option value="25" {{ request('entries', $entries ?? 10) == 25 ? 'selected' : '' }}>25</option>
@@ -64,37 +64,40 @@
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse($users as $index => $user)
-                            <tr class="hover:bg-blue-50/50 transition duration-200 ease-in-out">
-                                {{-- Nomor mengikuti pagination --}}
-                                <td class="px-6 py-4 font-medium text-gray-900">
-                                    {{ method_exists($users, 'firstItem') ? $users->firstItem() + $index : $index + 1 }}
-                                </td>
+                                <tr class="hover:bg-blue-50/50 transition duration-200 ease-in-out">
+                                    {{-- Nomor mengikuti pagination --}}
+                                    <td class="px-6 py-4 font-medium text-gray-900">
+                                        {{ method_exists($users, 'firstItem') ? $users->firstItem() + $index : $index + 1 }}
+                                    </td>
 
-                                <td class="px-6 py-4">
-                                    <div class="flex flex-col">
-                                        <span class="text-base font-semibold text-gray-800">{{ $user->nama }}</span>
-                                        <span class="text-xs text-gray-500">{{ $user->email }}</span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 font-medium text-gray-700">{{ $user->no_hp ?? '-' }}</td>
-                                <td class="px-6 py-4 text-center">
-                                    <!-- Form DELETE untuk pengguna -->
-                                    <form action="{{ route('admin.user.destroy', $user->id_user) }}" method="POST"
-                                        class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="button" onclick="confirmDelete(this)"
-                                            class="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-4 py-2 text-xs font-medium text-white shadow-sm hover:from-red-600 hover:to-red-700 hover:shadow-md transition-all duration-200 ml-2">
-                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1 1 0 00-1-1m-4 0h4">
-                                                </path>
-                                            </svg>
-                                            Hapus
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
+                                    <td class="px-6 py-4">
+                                        <div class="flex flex-col">
+                                            <span class="text-base font-semibold text-gray-800">{{ $user->nama }}</span>
+                                            <span class="text-xs text-gray-500">{{ $user->email }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 font-medium text-gray-700">{{ $user->no_hp ?? '-' }}</td>
+                                    <td class="px-6 py-4 text-center">
+                                        <form action="{{ route('admin.user.destroy', $user->id_user) }}" method="POST"
+                                            class="inline" onsubmit="return confirm('Yakin ingin menghapus user ini?')">
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button type="submit" class="inline-flex items-center justify-center rounded-lg
+                               bg-gradient-to-r from-red-500 to-red-600
+                               px-4 py-2 text-xs font-medium text-white shadow-sm
+                               hover:from-red-600 hover:to-red-700 hover:shadow-md
+                               transition-all duration-200 ml-2">
+                                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4
+                                     m-4 0a1 1 0 00-1 1v1h6V4a1 1 0 00-1-1m-4 0h4" />
+                                                </svg>
+                                                Hapus
+                                            </button>
+                                        </form>
+                                    </td>
+
+                                </tr>
                         @empty
                             <tr>
                                 <td colspan="4" class="py-8 text-center text-gray-500 bg-gray-50">
@@ -144,7 +147,7 @@
                 @if ($paginator)
                     <a href="{{ $paginator->previousPageUrl() ?: '#' }}"
                         class="px-3 py-1 rounded-lg border text-xs
-                                          {{ $paginator->onFirstPage() ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-100' }}">
+                                                  {{ $paginator->onFirstPage() ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-100' }}">
                         Previous
                     </a>
 
@@ -157,7 +160,7 @@
 
                     <a href="{{ $paginator->hasMorePages() ? $paginator->nextPageUrl() : '#' }}"
                         class="px-3 py-1 rounded-lg border text-xs
-                                          {{ $paginator->hasMorePages() ? 'bg-white hover:bg-gray-100' : 'bg-gray-100 text-gray-400 cursor-not-allowed' }}">
+                                                  {{ $paginator->hasMorePages() ? 'bg-white hover:bg-gray-100' : 'bg-gray-100 text-gray-400 cursor-not-allowed' }}">
                         Next
                     </a>
                 @endif

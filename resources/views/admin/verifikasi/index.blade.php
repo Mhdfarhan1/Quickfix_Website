@@ -156,17 +156,7 @@
                                             <i class="fas fa-eye"></i>
                                         </a>
 
-                                        {{-- 🔔 NOTIFIKASI SKCK (H-30 ATAU EXPIRED) --}}
-                                        @if($item->status == 'disetujui' && $expDate && $diff <= 30)
-                                            <form method="POST" action="{{ route('admin.verifikasi.notifySkck', $item->id) }}"
-                                                onsubmit="return confirm('Kirim notifikasi SKCK ke teknisi ini?')">
-                                                @csrf
-                                                <button class="bg-amber-500 text-white px-3 py-2 rounded text-xs">
-                                                    <i class="fas fa-bell"></i>
-                                                </button>
-                                            </form>
-                                        @endif
-
+                                        
                                         <form method="POST" action="{{ route('admin.verifikasi.destroy', $item->id) }}"
                                             onsubmit="return confirm('Hapus data ini?')">
                                             @csrf @method('DELETE')

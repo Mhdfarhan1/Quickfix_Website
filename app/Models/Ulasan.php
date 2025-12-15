@@ -18,8 +18,10 @@ class Ulasan extends Model
     ];
 
     public function pelanggan(){
-        return $this->belongsTo(User::class, 'id_pelanggan')->select('id_user','nama');
+        return $this->belongsTo(User::class, 'id_pelanggan')
+                    ->select('id_user','nama','foto_profile');
     }
+
 
 
     public function teknisi()

@@ -27,26 +27,34 @@ class ProfileController extends Controller
             'foto_profile' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // Ambil user
         $user = DB::table('user')->where('id_user', $request->id_user)->first();
 
-        // Hapus foto lama (jika ada)
-        if ($user && $user->foto_profile && Storage::exists(str_replace('storage/', 'public/', $user->foto_profile))) {
-            Storage::delete(str_replace('storage/', 'public/', $user->foto_profile));
+        // Hapus foto lama
+        if ($user && $user->foto_profile) {
+            $oldPath = 'public/foto/foto_teknisi/' . $user->foto_profile;
+            if (Storage::exists($oldPath)) {
+                Storage::delete($oldPath);
+            }
         }
 
-        // Upload foto baru
-        $path = $request->file('foto_profile')->store('foto_profile', 'public');
+        // Nama file unik
+        $file = $request->file('foto_profile');
+        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
 
+        // ⬇⬇⬇ SIMPAN KE FOTO/FOTO_TEKNISI ⬇⬇⬇
+        $file->storeAs('foto/foto_teknisi', $filename, 'public');
+
+        // Simpan HANYA nama file
         DB::table('user')->where('id_user', $request->id_user)
-            ->update(['foto_profile' => 'storage/' . $path]);
+            ->update(['foto_profile' => $filename]);
 
         return response()->json([
             'success' => true,
             'message' => 'Foto profil berhasil diupload',
-            'path' => asset('storage/' . $path)
+            'filename' => $filename,
         ]);
     }
+
 
     public function update(Request $request)
     {

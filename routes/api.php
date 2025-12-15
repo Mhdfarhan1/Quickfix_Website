@@ -26,10 +26,12 @@ use App\Http\Controllers\Api\KeranjangController;
 use App\Http\Controllers\Api\PemesananController;
 use App\Http\Controllers\Api\PasswordResetOtpController;
 use App\Http\Controllers\Api\TeknisiPesananController;
-use App\Http\Controllers\Api\VerifikasiTeknisiController;
 use App\Http\Controllers\Teknisi\KeahlianTeknisiController;
-use App\Http\Controllers\API\FlipController;
-use App\Http\Controllers\API\PayoutController;
+use App\Http\Controllers\Api\FlipController;
+use App\Http\Controllers\Api\PayoutController;
+use App\Http\Controllers\Api\FlipCallbackController;
+use App\Http\Controllers\MidtransWebhookController;
+
 
 
 
@@ -97,9 +99,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/update', [ProfileController::class, 'update']);
 });
 
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return response()->json([
+        'status' => true,
+        'data' => $request->user()
+    ]);
+});
+
 // PROFILE & GAMBAR
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/upload_foto', [ProfileController::class, 'uploadFoto']);
+    Route::post('/profile/uploadFoto', [ProfileController::class, 'uploadFoto']);
+
     Route::post('/upload_gambar_layanan', [ProfileController::class, 'uploadGambarLayanan']);
     Route::delete('/hapus_gambar_layanan/{id}', [ProfileController::class, 'deleteGambarLayanan']);
 });
@@ -183,6 +193,7 @@ Route::post('/flip/callback/payout', [FlipController::class, 'payoutCallback']);
 Route::post('/payout/release', [PayoutController::class, 'release']);
 // routes/api.php
 Route::post('/flip/callback', [FlipCallbackController::class, 'handle']);
+Route::post('/flip/webhook', [FlipCallbackController::class, 'handle']);
 
 Route::post('flip/callback', [PayoutController::class, 'flipCallback']);
 Route::post('/webhook/midtrans', [MidtransWebhookController::class, 'handle']);
@@ -197,10 +208,6 @@ Route::post('admin/orders/{kode}/process_refund', [PaymentController::class, 'ad
 // ===============================
 // 🔹 Password reset
 // ===============================
-Route::prefix('password')->group(function () {
-    Route::post('/forgot', [PasswordResetController::class, 'sendResetLink']);
-    Route::post('/reset', [PasswordResetController::class, 'resetPassword']);
-});
 
 Route::post('/password/reset-otp', [PasswordResetOtpController::class, 'sendResetOtp']);
 Route::post('/password/verify-otp', [PasswordResetOtpController::class, 'verifyResetOtp']);
@@ -294,11 +301,6 @@ Route::middleware('auth:sanctum')->get('/teknisi/riwayat', [TaskController::clas
 
 Route::get('/user/{id}/phone', [ChatController::class, 'getPhone']);
 
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/teknisi/verifikasi/status', [VerifikasiTeknisiController::class, 'status']);
-});
-Route::middleware('auth:sanctum')->post('/verifikasi-teknisi', [VerifikasiTeknisiController::class, 'store']);
 
 Route::middleware('auth:sanctum')->group(function () {
 

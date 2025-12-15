@@ -47,6 +47,7 @@ class TeknisiPesananController extends Controller
                 // pelanggan
                 'pelanggan.nama as nama_pelanggan',
                 'pelanggan.no_hp as no_hp',
+                'pelanggan.foto_profile as foto_profile',
 
                 // alamat
                 'alamat.alamat_lengkap',

@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Payout;
 use App\Models\Pemesanan;
+use App\Services\Notify;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PayoutService
@@ -120,31 +122,102 @@ class PayoutService
     {
         $reference = $data['reference_id'] ?? $data['reference'] ?? null;
         $flipId    = $data['id'] ?? $data['flip_id'] ?? null;
-        $status    = $data['status'] ?? null;
+        $statusRaw = $data['status'] ?? null;
 
-        $payout = null;
-        if ($reference) {
-            $payout = Payout::where('reference_id', $reference)->first();
-        }
-        if (!$payout && $flipId) {
-            $payout = Payout::where('flip_id', $flipId)->first();
-        }
-
-        if (!$payout) {
-            \Log::warning('Callback payout not found', $data);
+        if (!$reference && !$flipId) {
+            Log::warning('Flip callback missing reference & flip_id', $data);
             return;
         }
 
-        $payout->update([
-            'status' => $status ?? $payout->status,
-            'raw_response' => json_encode($data),
-            'flip_id' => $flipId ?? $payout->flip_id,
-        ]);
+        // Normalisasi status
+        $status = strtolower((string) $statusRaw);
 
-        // opsional: notify teknisi ketika success
-        if (strtolower($status) === 'success' || strtolower($status) === 'done' || strtolower($status) === 'settlement') {
-            // Notify::technicianPaymentReceived($payout->id_teknisi) // buat method notify
+        DB::transaction(function () use ($reference, $flipId, $status, $data) {
+
+            $payout = null;
+
+            if ($reference) {
+                $payout = Payout::where('reference_id', $reference)
+                    ->lockForUpdate()
+                    ->first();
+            }
+
+            if (!$payout && $flipId) {
+                $payout = Payout::where('flip_id', $flipId)
+                    ->lockForUpdate()
+                    ->first();
+            }
+
+            if (!$payout) {
+                Log::warning('Callback payout not found', [
+                    'reference' => $reference,
+                    'flip_id' => $flipId
+                ]);
+                return;
+            }
+
+            Log::debug('DEBUG RELASI TEKNISI', [
+                'payout_id' => $payout->id,
+                'id_teknisi' => $payout->id_teknisi,
+                'teknisi' => optional($payout->teknisi)->toArray(),
+                'user_teknisi' => optional($payout->teknisi->user)->toArray(),
+            ]);
+
+            /**
+             * ===============================
+             * CEGAH CALLBACK DOBEL
+             * ===============================
+             */
+            if ($payout->status === 'success') {
+                Log::info('Flip callback ignored (already success)', [
+                    'payout_id' => $payout->id
+                ]);
+                return;
+            }
+
+            /**
+             * ===============================
+             * UPDATE STATUS PAYOUT
+             * ===============================
+             */
+            if (in_array($status, ['success', 'done', 'settlement'])) {
+                $payout->status = 'success';
+            } elseif (in_array($status, ['failed', 'cancelled', 'rejected'])) {
+                $payout->status = 'failed';
+            } else {
+                $payout->status = $status;
+            }
+
+            $payout->flip_id      = $flipId ?? $payout->flip_id;
+            $payout->raw_response = json_encode($data);
+            $payout->save();
+
+            /**
+             * ===============================
+             * NOTIFIKASI KE TEKNISI
+             * ===============================
+             */
+            if ($payout->status === 'success') {
+
+            $userIdTeknisi = optional($payout->teknisi->user)->id_user
+                ?? optional($payout->teknisi->user)->id
+                ?? null;
+
+            if ($userIdTeknisi) {
+                Notify::technicianPayoutSuccess($payout->teknisi->user->id_user);
+
+                Log::info('Notifikasi payout sukses ke teknisi', [
+                    'payout_id' => $payout->id,
+                    'id_teknisi' => $payout->id_teknisi,
+                    'id_user_teknisi' => $userIdTeknisi
+                ]);
+            } else {
+                Log::warning('Gagal kirim notif payout: user teknisi tidak ditemukan', [
+                    'id_teknisi' => $payout->id_teknisi
+                ]);
+            }
         }
+        });
     }
 
 

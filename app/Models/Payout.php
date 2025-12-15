@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models;
-
+use App\Models\Teknisi;
 use Illuminate\Database\Eloquent\Model;
 
 class Payout extends Model
@@ -31,7 +31,7 @@ class Payout extends Model
 
     public function teknisi()
     {
-        return $this->belongsTo(\App\Models\User::class, 'id_teknisi'); // atau model teknisi Anda
+        return $this->belongsTo(Teknisi::class, 'id_teknisi', 'id_teknisi');
     }
 
     // accessor alias jika kamu menggunakan property lain di controller

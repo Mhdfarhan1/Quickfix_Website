@@ -89,6 +89,16 @@ class Notify
         }
     }
 
+    public static function technicianPayoutSuccess($techUserId)
+    {
+        return self::send(
+            $techUserId,
+            "Payout Berhasil",
+            "Dana pekerjaan telah berhasil ditransfer ke rekening Anda."
+        );
+    }
+
+
     /**
      * ========== NOTIFIKASI UNTUK TEKNISI ==========
      */

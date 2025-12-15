@@ -63,9 +63,16 @@ class UlasanController extends Controller
     public function getUlasanTeknisi($id_teknisi)
     {
         $ulasan = Ulasan::where('id_teknisi', $id_teknisi)
-                        ->with('pelanggan:id_user,nama')
-                        ->orderBy('created_at', 'desc')
-                        ->get();
+            ->with('pelanggan:id_user,nama,foto_profile')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $ulasan->transform(function ($item) {
+            $item->pelanggan->foto_url = $item->pelanggan->foto_profile
+                ? url('storage/foto/foto_teknisi/' . $item->pelanggan->foto_profile)
+                : null;
+            return $item;
+        });
 
         $rating_avg = Ulasan::where('id_teknisi', $id_teknisi)->avg('rating');
 
@@ -75,6 +82,7 @@ class UlasanController extends Controller
             "ulasan" => $ulasan
         ]);
     }
+
 
     public function cekUlasanPemesanan($id_pemesanan)
     {

@@ -36,5 +36,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('verifikasi_teknisi');
     }
-
 };

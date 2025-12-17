@@ -394,7 +394,24 @@ class PemesananController extends Controller
         ]);
     }
 
+    public function getPemesananById($id)
+    {
+        $data = DB::table('pemesanan')
+            ->where('id_pemesanan', $id)
+            ->first();
 
+        if (!$data) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Pemesanan tidak ditemukan'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $data
+        ]);
+    }
 
     
 }

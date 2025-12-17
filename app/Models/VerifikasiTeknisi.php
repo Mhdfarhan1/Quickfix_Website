@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class VerifikasiTeknisi extends Model
 {
@@ -14,19 +14,32 @@ class VerifikasiTeknisi extends Model
 
     protected $fillable = [
         'id_teknisi',
+        
+        // Identitas
         'nik',
         'nama',
-        'alamat',
+        'alamat',      // Dari blok bawah
+        
+        // Keuangan
         'rekening',
         'bank',
+
+        // Wilayah
         'provinsi',
         'kabupaten',
         'kecamatan',
+
+        // Dokumen
         'foto_ktp',
         'foto_skck',
         'buku_tabungan',
-        'skck_expired',
-        'status'
+
+        // Status SKCK (Saya masukkan keduanya agar aman)
+        'skck_status',  // Dari blok atas
+        'skck_expired', // Dari blok bawah
+
+        // Status Verifikasi
+        'status',
     ];
 
     protected $casts = [
@@ -38,6 +51,7 @@ class VerifikasiTeknisi extends Model
      */
     public function teknisi()
     {
+        // Pastikan model Teknisi ada di namespace yang sama atau import jika beda
         return $this->belongsTo(Teknisi::class, 'id_teknisi', 'id_teknisi');
     }
 }

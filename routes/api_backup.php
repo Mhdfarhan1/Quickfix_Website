@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 
 /*
 |--------------------------------------------------------------------------
@@ -10,45 +10,46 @@ use Illuminate\Support\Facades\Route;
 */
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AuthOtpController;
 use App\Http\Controllers\Api\ChatController;
-use App\Http\Controllers\API\FlipController;
+use App\Http\Controllers\Api\TeknisiController;
+use App\Http\Controllers\Api\PemesananController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\BuktiController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\KeahlianController;
-use App\Http\Controllers\Api\BuktiController;
 use App\Http\Controllers\Api\AlamatController;
 use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\LokasiController;
-use App\Http\Controllers\API\PayoutController;
+use App\Http\Controllers\Api\TrackingController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\UlasanController;
 use App\Http\Controllers\NotifikasiController;
-use App\Http\Controllers\Api\AuthOtpController;
-use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\Api\ProfileController;
-use App\Http\Controllers\Api\TeknisiController;
-use App\Http\Controllers\Api\TrackingController;
 use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\KeranjangController;
-use App\Http\Controllers\Api\PemesananController;
-use App\Http\Controllers\Api\VerifikasiTeknisiController;
-use App\Http\Controllers\Api\FlipCallbackController;
-use App\Http\Controllers\Api\TeknisiPesananController;
 use App\Http\Controllers\Api\PasswordResetOtpController;
+use App\Http\Controllers\Api\TeknisiPesananController;
+use App\Http\Controllers\Api\VerifikasiTeknisiController;
 use App\Http\Controllers\Teknisi\KeahlianTeknisiController;
-use App\Http\Controllers\MidtransWebhookController;
+use App\Http\Controllers\API\FlipController;
+use App\Http\Controllers\API\PayoutController;
 
-use App\Http\Controllers\UserController;
-Route::apiResource('users', UserController::class);
+/*
+|--------------------------------------------------------------------------
+| API STATUS
+|--------------------------------------------------------------------------
+*/
 
-// ===============================
-// API STATUS
-// ===============================
-Route::get('/', function () {
-    return response()->json(['message' => 'API Quickfix aktif 🚀']);
-});
+Route::get('/', fn() => response()->json(['message' => 'API Quickfix aktif']));
+Route::get('/test', fn() => response()->json(['status' => 'API hidup']));
+Route::get('/test-db', fn() => DB::table('pemesanan')->limit(5)->get());
 
-// ===============================
-// AUTH
-// ===============================
+/*
+|--------------------------------------------------------------------------
+| AUTH
+|--------------------------------------------------------------------------
+*/
+
 Route::prefix('auth')->group(function () {
 
     Route::post('/register', [AuthController::class, 'register']);
@@ -115,25 +116,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/update', [ProfileController::class, 'update']);
 });
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return response()->json([
-        'status' => true,
-        'data' => $request->user()
-    ]);
+// PROFILE & GAMBAR
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/upload_foto', [ProfileController::class, 'uploadFoto']);
+    Route::post('/upload_gambar_layanan', [ProfileController::class, 'uploadGambarLayanan']);
+    Route::delete('/hapus_gambar_layanan/{id}', [ProfileController::class, 'deleteGambarLayanan']);
 });
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return response()->json([
-        'status' => true,
-        'data' => $request->user()
-    ]);
-});
+// GAMBAR TEKNISI
+Route::get('/gambar_layanan/{id_teknisi}', [ProfileController::class, 'getGambarLayananByTeknisi']);
+Route::get('/teknisi/{id_teknisi}/gambar', [ProfileController::class, 'getGambarLayananByTeknisi']);
 
-/*
-|--------------------------------------------------------------------------
-| PROFILE & GAMBAR (FINAL)
-|--------------------------------------------------------------------------
-*/
+Route::get('/bukti_pekerjaan/{id_teknisi}', [ProfileController::class, 'getBuktiPekerjaanByTeknisi']);
+
+
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::post('/profile/upload-foto', [ProfileController::class, 'uploadFoto']);
@@ -145,7 +142,6 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/gambar_layanan/{id_teknisi}', [ProfileController::class, 'getGambarLayananByTeknisi']);
 Route::get('/teknisi/{id_teknisi}/gambar', [ProfileController::class, 'getGambarLayananByTeknisi']);
 Route::get('/bukti_pekerjaan/{id_teknisi}', [ProfileController::class, 'getBuktiPekerjaanByTeknisi']);
-
 
 /*
 |--------------------------------------------------------------------------
@@ -193,18 +189,6 @@ Route::get('/payment/status', [PaymentController::class, 'checkStatus']);
 Route::get('/get_struk/{kode}', [PaymentController::class, 'getStruk']);
 
 /*
-|-------------------------------------------------------------------------- 
-| NOTIFIKASI
-|-------------------------------------------------------------------------- 
-*/
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/notifications', [NotifikasiController::class, 'index']);
-    Route::post('/notifications/read/{id}', [NotifikasiController::class, 'markAsRead']);
-});
-
-
-/*
 |--------------------------------------------------------------------------
 | PASSWORD RESET
 |--------------------------------------------------------------------------
@@ -215,7 +199,6 @@ Route::post('/flip/callback/payout', [FlipController::class, 'payoutCallback']);
 Route::post('/payout/release', [PayoutController::class, 'release']);
 // routes/api.php
 Route::post('/flip/callback', [FlipCallbackController::class, 'handle']);
-Route::post('/flip/webhook', [FlipCallbackController::class, 'handle']);
 
 Route::post('flip/callback', [PayoutController::class, 'flipCallback']);
 Route::post('/webhook/midtrans', [MidtransWebhookController::class, 'handle']);
@@ -227,17 +210,9 @@ Route::post('orders/{kode}/customer/request_refund', [PaymentController::class, 
 Route::post('admin/orders/{kode}/process_refund', [PaymentController::class, 'adminProcessRefund']);
 
 
-// ===============================
-// 🔹 Password reset
-// ===============================
-
-Route::post('/password/reset-otp', [PasswordResetOtpController::class, 'sendResetOtp']);
-Route::post('/password/verify-otp', [PasswordResetOtpController::class, 'verifyResetOtp']);
-
-
-
-Route::get('/tes', function () {
-    return response()->json(['status' => 'OK']);
+Route::prefix('password')->group(function () {
+    Route::post('/forgot', [PasswordResetOtpController::class, 'sendResetOtp']);
+    Route::post('/reset', [PasswordResetOtpController::class, 'verifyResetOtp']);
 });
 
 /*
@@ -259,8 +234,7 @@ Route::get('/tracking/customer/{id_pemesanan}', [TrackingController::class, 'get
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth:sanctum', 'role:teknisi')->group(function () {
-    Route::get('/teknisi/pesanan/baru', [TeknisiPesananController::class, 'pesananBaru']);
+Route::middleware('auth:sanctum')->group(function () {
     Route::post('/pemesanan/{id}/terima', [TeknisiPesananController::class, 'terimaPekerjaan']);
     Route::post('/teknisi/pemesanan/{id}/mulai', [TeknisiPesananController::class, 'mulaiKerja']);
     Route::post('/pemesanan/{id}/upload-bukti', [BuktiController::class, 'uploadBukti']);

@@ -11,21 +11,12 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * Nama tabel sesuai ERD.
-     */
     protected $table = 'user';
 
-    protected $connection = 'mysql'; // <--- tambahkan ini
-
-    /**
-     * Primary key sesuai ERD.
-     */
     protected $primaryKey = 'id_user';
+    protected $keyType = 'int';
+    public $incrementing = true;
 
-    /**
-     * Kolom yang dapat diisi secara massal.
-     */
     protected $fillable = [
         'nama',
         'email',
@@ -36,21 +27,19 @@ class User extends Authenticatable
         'is_active',
     ];
 
-    /**
-     * Kolom yang disembunyikan ketika dikonversi ke array/JSON.
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-  
     protected $casts = [
         'is_active' => 'boolean',
         'email_verified_at' => 'datetime',
     ];
 
-    
+    // ========================
+    // MUTATOR PASSWORD
+    // ========================
     public function setPasswordAttribute($value)
     {
         if (!empty($value) && !str_starts_with($value, '$2y$')) {
@@ -60,6 +49,9 @@ class User extends Authenticatable
         }
     }
 
+    // ========================
+    // RELATIONSHIPS
+    // ========================
     public function alamat()
     {
         return $this->hasMany(\App\Models\Alamat::class, 'id_user', 'id_user');
@@ -67,11 +59,11 @@ class User extends Authenticatable
 
     public function teknisi()
     {
-        return $this->hasOne(Teknisi::class, 'id_user', 'id_user');
+        return $this->hasOne(\App\Models\Teknisi::class, 'id_user', 'id_user');
     }
 
     public function pemesanan()
     {
-        return $this->hasMany(Pemesanan::class, 'id_pelanggan', 'id_user');
+        return $this->hasMany(\App\Models\Pemesanan::class, 'id_pelanggan', 'id_user');
     }
 }

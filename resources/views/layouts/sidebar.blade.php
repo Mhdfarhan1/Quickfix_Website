@@ -1,5 +1,5 @@
 {{-- ===========================
-   DESKTOP SIDEBAR
+DESKTOP SIDEBAR
 =========================== --}}
 <aside class="flex-col bg-white text-gray-800 shadow-2xl w-64 md:flex hidden sidebar-animate">
 
@@ -18,11 +18,10 @@
     <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
 
         {{-- Dashboard --}}
-        <a href="{{ route('admin.dashboard') }}"
-           class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+        <a href="{{ route('admin.dashboard') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
            {{ request()->routeIs('admin.dashboard')
-                ? 'bg-blue-100/50 text-blue-600 font-medium'
-                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-medium'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-tachometer-alt w-5"></i>
             <span>Dashboard</span>
         </a>
@@ -39,12 +38,10 @@
         @endphp
 
         <div x-data="{ open: {{ $isManajemenActive ? 'true' : 'false' }} }">
-            <button
-                @click="open = !open"
-                class="flex items-center gap-3 w-full rounded-xl px-4 py-3 transition-all
+            <button @click="open = !open" class="flex items-center gap-3 w-full rounded-xl px-4 py-3 transition-all
                 {{ $isManajemenActive
-                    ? 'text-blue-600 bg-blue-50'
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'text-blue-600 bg-blue-50'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
                 <i class="fas fa-cogs w-5"></i>
                 <span>Manajemen</span>
                 <i :class="open ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="ml-auto w-3"></i>
@@ -53,23 +50,33 @@
             <div x-show="open" x-transition class="mt-1 space-y-1 pl-7">
 
                 {{-- Akun Teknisi --}}
-                <a href="{{ route('admin.teknisi.index') }}"
-                   class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+                <a href="{{ route('admin.teknisi.index') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
                    {{ request()->routeIs('admin.teknisi.*')
-                        ? 'bg-blue-100/50 text-blue-600 font-semibold'
-                        : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-semibold'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
                     <i class="fas fa-user-cog w-5"></i>
                     <span>Akun Teknisi</span>
                 </a>
 
                 {{-- Pengguna --}}
-                <a href="{{ route('admin.user.index') }}"
-                   class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+                <a href="{{ route('admin.user.index') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
                    {{ request()->routeIs('admin.user.*')
-                        ? 'bg-blue-100/50 text-blue-600 font-semibold'
-                        : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-semibold'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
                     <i class="fas fa-users w-5"></i>
-                    <span>Pengguna</span>
+                    <span>Akun Pengguna</span>
+                </a>
+
+                {{-- Verifikasi Teknisi --}}
+                <a href="{{ route('admin.verifikasi.index') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+   {{ request()->routeIs('admin.verifikasi.*')
+    ? 'bg-blue-100/50 text-blue-600 font-semibold'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+
+                    {{-- Ikon diganti jadi User Check --}}
+                    <i class="fas fa-user-check w-5"></i>
+
+                    <span>Verifikasi Teknisi</span>
                 </a>
 
             </div>
@@ -82,41 +89,37 @@
         </div>
 
         {{-- Complain Masuk --}}
-        <a href="{{ route('admin.complaints.index') }}"
-           class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+        <a href="{{ route('admin.complaints.index') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
            {{ request()->routeIs('admin.complaints.*')
-                ? 'bg-blue-100/50 text-blue-600 font-medium'
-                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-medium'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-comments w-5"></i>
             <span>Complain Masuk</span>
         </a>
 
         {{-- Total Pemasukan --}}
-        <a href="{{ route('admin.pendapatan.index') }}"
-           class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+        <a href="{{ route('admin.pendapatan.index') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
            {{ request()->routeIs('admin.pendapatan.*')
-                ? 'bg-blue-100/50 text-blue-600 font-medium'
-                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-medium'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-wallet w-5"></i>
             <span>Total Pemasukan</span>
         </a>
 
         {{-- Pesanan Selesai --}}
-        <a href="{{ route('admin.pemesanan.selesai') }}"
-           class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+        <a href="{{ route('admin.pemesanan.selesai') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
            {{ request()->routeIs('admin.pemesanan.selesai')
-                ? 'bg-blue-100/50 text-blue-600 font-medium'
-                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-medium'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-box-open w-5"></i>
             <span>Pesanan Selesai</span>
         </a>
 
         {{-- Banner --}}
-        <a href="{{ route('admin.banner.index') }}"
-           class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+        <a href="{{ route('admin.banner.index') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
            {{ request()->routeIs('admin.banner.*')
-                ? 'bg-blue-100/50 text-blue-600 font-medium'
-                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-medium'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-image w-5"></i>
             <span>Upload Banner Promosi</span>
         </a>
@@ -125,7 +128,7 @@
 
 
 {{-- ===========================
-   MOBILE SIDEBAR + OVERLAY
+MOBILE SIDEBAR + OVERLAY
 =========================== --}}
 <aside id="mobile-sidebar"
     class="fixed top-0 left-0 w-64 h-full bg-white text-gray-800 shadow-2xl transform -translate-x-full transition-transform duration-300 z-50 md:hidden"
@@ -137,10 +140,9 @@
             <div
                 class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
                 <img src="{{ asset('assets/img/Logo_quickfix.png') }}" alt="Logo"
-                     class="w-10 h-10 object-contain rounded-full">
+                    class="w-10 h-10 object-contain rounded-full">
             </div>
-            <span
-                class="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+            <span class="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
                 QuickFix
             </span>
         </div>
@@ -153,11 +155,10 @@
     <!-- Navigation -->
     <nav class="px-4 py-6 space-y-2">
         {{-- Dashboard --}}
-        <a href="{{ route('admin.dashboard') }}"
-           class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+        <a href="{{ route('admin.dashboard') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
            {{ request()->routeIs('admin.dashboard')
-                ? 'bg-blue-100/50 text-blue-600 font-medium'
-                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-medium'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-tachometer-alt w-5"></i>
             <span>Dashboard</span>
         </a>
@@ -168,11 +169,10 @@
         @endphp
 
         <div x-data="{ open: {{ $isManajemenActiveMobile ? 'true' : 'false' }} }" class="px-0">
-            <button @click="open = !open"
-                class="flex items-center gap-3 w-full rounded-xl px-4 py-3 transition-all duration-300
+            <button @click="open = !open" class="flex items-center gap-3 w-full rounded-xl px-4 py-3 transition-all duration-300
                 {{ $isManajemenActiveMobile
-                    ? 'text-blue-600 bg-blue-50'
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'text-blue-600 bg-blue-50'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
                 <i class="fas fa-cogs w-5"></i>
                 <span>Manajemen</span>
                 <i :class="open ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" class="ml-auto w-3"></i>
@@ -180,21 +180,19 @@
 
             <div x-show="open" x-transition class="mt-1 space-y-1 pl-7">
                 {{-- Akun Teknisi --}}
-                <a href="{{ route('admin.teknisi.index') }}"
-                   class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+                <a href="{{ route('admin.teknisi.index') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
                    {{ request()->routeIs('admin.teknisi.*')
-                        ? 'bg-blue-100/50 text-blue-600 font-semibold'
-                        : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-semibold'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
                     <i class="fas fa-user-cog w-5"></i>
                     <span>Akun Teknisi</span>
                 </a>
 
                 {{-- Pengguna --}}
-                <a href="{{ route('admin.user.index') }}"
-                   class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+                <a href="{{ route('admin.user.index') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
                    {{ request()->routeIs('admin.user.*')
-                        ? 'bg-blue-100/50 text-blue-600 font-semibold'
-                        : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-semibold'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
                     <i class="fas fa-users w-5"></i>
                     <span>Pengguna</span>
                 </a>
@@ -208,41 +206,37 @@
         </div>
 
         {{-- Complain Masuk --}}
-        <a href="{{ route('admin.complaints.index') }}"
-           class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+        <a href="{{ route('admin.complaints.index') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
            {{ request()->routeIs('admin.complaints.*')
-                ? 'bg-blue-100/50 text-blue-600 font-medium'
-                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-medium'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-comments w-5"></i>
             <span>Complain Masuk</span>
         </a>
 
         {{-- Total Pemasukan --}}
-        <a href="{{ route('admin.pendapatan.index') }}"
-           class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+        <a href="{{ route('admin.pendapatan.index') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
            {{ request()->routeIs('admin.pendapatan.*')
-                ? 'bg-blue-100/50 text-blue-600 font-medium'
-                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-medium'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-wallet w-5"></i>
             <span>Total Pemasukan</span>
         </a>
 
         {{-- Pesanan Selesai --}}
-        <a href="{{ route('admin.pemesanan.selesai') }}"
-           class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+        <a href="{{ route('admin.pemesanan.selesai') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
            {{ request()->routeIs('admin.pemesanan.selesai')
-                ? 'bg-blue-100/50 text-blue-600 font-medium'
-                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-medium'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-box-open w-5"></i>
             <span>Pesanan Selesai</span>
         </a>
 
         {{-- Banner Promosi --}}
-        <a href="{{ route('admin.banner.index') }}"
-           class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
+        <a href="{{ route('admin.banner.index') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300
            {{ request()->routeIs('admin.banner.*')
-                ? 'bg-blue-100/50 text-blue-600 font-medium'
-                : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+    ? 'bg-blue-100/50 text-blue-600 font-medium'
+    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
             <i class="fas fa-image w-5"></i>
             <span>Upload Banner Promosi</span>
         </a>
@@ -251,5 +245,5 @@
 
 <!-- Mobile Overlay -->
 <div id="mobile-overlay" class="hidden fixed inset-0 bg-black/50 z-40 md:hidden"
-     @click="$el.classList.add('hidden'); document.getElementById('mobile-sidebar').classList.add('-translate-x-full')">
+    @click="$el.classList.add('hidden'); document.getElementById('mobile-sidebar').classList.add('-translate-x-full')">
 </div>

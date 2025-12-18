@@ -23,6 +23,8 @@ return new class extends Migration {
             $table->index(['ip', 'type', 'created_at'], 'incident_forensic_idx');
         });
 
+
+
         // blocked_ips (di database utama)
         Schema::create('blocked_ips', function (Blueprint $table) {
             $table->id();
@@ -31,6 +33,8 @@ return new class extends Migration {
             $table->string('reason')->nullable();
             $table->timestamps();
         });
+
+
 
         // tambah is_blocked di DATABASE UTAMA (bukan audit)
         

@@ -39,6 +39,7 @@ class TaskController extends Controller
                 'pemesanan.id_keahlian',
                 'pemesanan.id_alamat',
                 'user.no_hp as no_hp_pelanggan',
+                'user.foto_profile as foto_pelanggan',
 
 
                 'pemesanan.kode_pemesanan',

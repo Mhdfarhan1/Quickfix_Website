@@ -1,19 +1,24 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Response;
+
+/*
+|--------------------------------------------------------------------------
+| Import Controllers
+|--------------------------------------------------------------------------
+*/
+
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\API\FlipController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\KeahlianController;
 use App\Http\Controllers\Api\BuktiController;
 use App\Http\Controllers\Api\AlamatController;
 use App\Http\Controllers\Api\BannerController;
 use App\Http\Controllers\Api\LokasiController;
+use App\Http\Controllers\API\PayoutController;
 use App\Http\Controllers\Api\UlasanController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\Api\AuthOtpController;
@@ -24,13 +29,17 @@ use App\Http\Controllers\Api\TrackingController;
 use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\KeranjangController;
 use App\Http\Controllers\Api\PemesananController;
-use App\Http\Controllers\Api\PasswordResetOtpController;
-use App\Http\Controllers\Api\TeknisiPesananController;
 use App\Http\Controllers\Api\VerifikasiTeknisiController;
+use App\Http\Controllers\Api\FlipCallbackController;
+use App\Http\Controllers\Api\TeknisiPesananController;
+use App\Http\Controllers\Api\PasswordResetOtpController;
+use App\Http\Controllers\Api\PendapatanTeknisi;
 use App\Http\Controllers\Teknisi\KeahlianTeknisiController;
+use App\Http\Controllers\MidtransWebhookController;
 
 
-
+use App\Http\Controllers\UserController;
+Route::apiResource('users', UserController::class);
 
 // ===============================
 // API STATUS
@@ -43,8 +52,13 @@ Route::get('/', function () {
 // AUTH
 // ===============================
 Route::prefix('auth')->group(function () {
+
     Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+
+    Route::post('/register-request', [AuthOtpController::class, 'registerRequest']);
+    Route::post('/verify-otp', [AuthOtpController::class, 'verifyOtp']);
+    Route::post('/resend-otp', [AuthOtpController::class, 'resendOtp']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/profile', [AuthController::class, 'profile']);
@@ -52,44 +66,47 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-Route::middleware(['auth:sanctum', 'role:teknisi'])->group(function () {
-    Route::get('/tugas-teknisi', [TaskController::class, 'getTasksByTeknisi']);
-});
+/*
+|--------------------------------------------------------------------------
+| TEKNISI INFO
+|--------------------------------------------------------------------------
+*/
 
-Route::prefix('auth')->group(function () {
-    Route::post('register-request', [AuthOtpController::class, 'registerRequest']);
-    Route::post('verify-otp', [AuthOtpController::class, 'verifyOtp']);
-    Route::post('resend-otp', [AuthOtpController::class, 'resendOtp']);
-});
-
-
-// ===============================
-// TEKNISI
-// ===============================
 Route::get('/get_teknisi', [TeknisiController::class, 'getTeknisi']);
 Route::get('/get_teknisi_list', [TeknisiController::class, 'getListTeknisi']);
 Route::get('/teknisi/layanan', [TeknisiController::class, 'getLayananTeknisi']);
 Route::get('/search-teknisi', [TeknisiController::class, 'searchTeknisi']);
 Route::get('/layanan-detail', [TeknisiController::class, 'getLayananDetail']);
 
+/*
+|--------------------------------------------------------------------------
+| PEMESANAN
+|--------------------------------------------------------------------------
+*/
 
-
-// ===============================
-// PEMESANAN (ORDER)
-// ===============================
 Route::get('/get_pemesanan', [PemesananController::class, 'getPemesanan']);
 Route::middleware('auth:sanctum')->get('/get_pemesanan_by_user', [PemesananController::class, 'getPemesananByUser']);
 Route::middleware('auth:sanctum')->get('/pemesanan/{id}', [PemesananController::class, 'getPemesananById']);
 Route::middleware('auth:sanctum')->post('/cancel_pemesanan', [PemesananController::class, 'cancelPemesanan']);
 Route::post('/add_pemesanan', [PemesananController::class, 'addPemesanan']);
+// routes/api.php
+Route::middleware('auth:sanctum')->post('/pemesanan/{id}/batalkan', [PemesananController::class, 'batalkanPemesanan']);
 
-// ===============================
-// Keranjang
-// ===============================
+/*
+| KERANJANG
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/keranjang', [KeranjangController::class, 'getKeranjang']);
 Route::post('/keranjang/add', [KeranjangController::class, 'addKeranjang']);
 Route::delete('/keranjang/{id}', [KeranjangController::class, 'deleteKeranjang']);
 Route::post('/keranjang/checkout', [KeranjangController::class, 'checkout']);
+
+/*
+|--------------------------------------------------------------------------
+| PROFILE
+|--------------------------------------------------------------------------
+*/  
 
 // ===============================
 // PROFILE
@@ -100,63 +117,64 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/user/update', [ProfileController::class, 'update']);
 });
 
-// PROFILE & GAMBAR
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return response()->json([
+        'status' => true,
+        'data' => $request->user()
+    ]);
+});
+
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return response()->json([
+        'status' => true,
+        'data' => $request->user()
+    ]);
+});
+
+/*
+|--------------------------------------------------------------------------
+| PROFILE & GAMBAR (FINAL)
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/upload_foto', [ProfileController::class, 'uploadFoto']);
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::post('/profile/upload-foto', [ProfileController::class, 'uploadFoto']);
     Route::post('/upload_gambar_layanan', [ProfileController::class, 'uploadGambarLayanan']);
     Route::delete('/hapus_gambar_layanan/{id}', [ProfileController::class, 'deleteGambarLayanan']);
 });
 
-// GAMBAR TEKNISI
+// public
 Route::get('/gambar_layanan/{id_teknisi}', [ProfileController::class, 'getGambarLayananByTeknisi']);
 Route::get('/teknisi/{id_teknisi}/gambar', [ProfileController::class, 'getGambarLayananByTeknisi']);
-
 Route::get('/bukti_pekerjaan/{id_teknisi}', [ProfileController::class, 'getBuktiPekerjaanByTeknisi']);
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'show']);
-    Route::post('/profile/upload-foto', [ProfileController::class, 'uploadFoto']);
-});
 
-
-// ===============================
-// 🔹 Bukti Pekerjaan
-// ===============================
+/*
+|--------------------------------------------------------------------------
+| BUKTI PEKERJAAN
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/bukti', [BuktiController::class, 'index']);
 Route::get('/bukti/{id_teknisi}', [BuktiController::class, 'getByTeknisi']);
 Route::delete('/bukti/{id}', [BuktiController::class, 'destroy']);
-
-Route::get('/teknisi/{id_teknisi}/tugas', [TaskController::class, 'getTasksByTeknisi']);
-
 Route::get('/bukti/recent', [BuktiController::class, 'getRecent']);
 
+/*
+|--------------------------------------------------------------------------
+| TUGAS TEKNISI
+|--------------------------------------------------------------------------
+*/
 
-// ===============================
-// 🔹 BackUp adn Restore
-// ===============================
-Route::get('/backup', function () {
-    Artisan::call('backup:run');
-    return response()->json(['message' => 'Backup berhasil dijalankan']);
-});
+Route::middleware(['auth:sanctum', 'role:teknisi'])->get('/tugas-teknisi', [TaskController::class, 'getTasksByTeknisi']);
+Route::get('/teknisi/{id_teknisi}/tugas', [TaskController::class, 'getTasksByTeknisi']);
 
-Route::post('/restore', function (Request $request) {
-    $backupFile = storage_path('app/backup/latest.zip');
-    if (!file_exists($backupFile)) {
-        return response()->json(['message' => 'File backup tidak ditemukan'], 404);
-    }
+/*
+|--------------------------------------------------------------------------
+| ALAMAT
+|--------------------------------------------------------------------------
+*/
 
-    // Contoh pseudo-restore
-    // Jalankan perintah artisan atau unzip manual
-    Artisan::call('backup:restore', ['--file' => $backupFile]);
-
-    return response()->json(['message' => 'Restore berhasil dijalankan']);
-});
-
-
-// ===============================
-// 🔹 Alamat
-// ===============================
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/alamat', [AlamatController::class, 'index']);
     Route::post('/alamat', [AlamatController::class, 'store']);
@@ -165,29 +183,55 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/alamat/{id}/default', [AlamatController::class, 'setDefault']);
 });
 
-// ===============================
-// 🔹 pembayaran
-// ===============================
-// 🔹 Buat link pembayaran (dipanggil saat user klik "Bayar Sekarang")
+/*
+|--------------------------------------------------------------------------
+| PEMBAYARAN
+|--------------------------------------------------------------------------
+*/
+
 Route::post('/payment/create', [PaymentController::class, 'createPayment']);
-
-// 🔹 Endpoint callback Midtrans (wajib sesuai di dashboard Midtrans)
 Route::post('/payment/notification', [PaymentController::class, 'handleNotification']);
-
-// 🔹 Endpoint untuk Flutter polling status pembayaran
 Route::get('/payment/status', [PaymentController::class, 'checkStatus']);
-
-// 🔹 Endpoint untuk ambil struk pembayaran (setelah sukses)
 Route::get('/get_struk/{kode}', [PaymentController::class, 'getStruk']);
+
+/*
+|-------------------------------------------------------------------------- 
+| NOTIFIKASI
+|-------------------------------------------------------------------------- 
+*/
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/notifications', [NotifikasiController::class, 'index']);
+    Route::post('/notifications/read/{id}', [NotifikasiController::class, 'markAsRead']);
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| PASSWORD RESET
+|--------------------------------------------------------------------------
+*/
+// routes/api.php
+Route::middleware('auth:sanctum')->post('/payout/auto/{id}', [PayoutController::class, 'auto']);
+Route::post('/flip/callback/payout', [FlipController::class, 'payoutCallback']);
+Route::post('/payout/release', [PayoutController::class, 'release']);
+// routes/api.php
+Route::post('/flip/callback', [FlipCallbackController::class, 'handle']);
+Route::post('/flip/webhook', [FlipCallbackController::class, 'handle']);
+
+Route::post('flip/callback', [PayoutController::class, 'flipCallback']);
+Route::post('/webhook/midtrans', [MidtransWebhookController::class, 'handle']);
+Route::get('orders/{kode}', [PaymentController::class, 'getOrder']);
+
+Route::post('orders/{kode}/technician/complete', [PaymentController::class, 'technicianComplete']);
+Route::post('orders/{kode}/customer/confirm', [PaymentController::class, 'customerConfirm']);
+Route::post('orders/{kode}/customer/request_refund', [PaymentController::class, 'customerRequestRefund']);
+Route::post('admin/orders/{kode}/process_refund', [PaymentController::class, 'adminProcessRefund']);
 
 
 // ===============================
 // 🔹 Password reset
 // ===============================
-Route::prefix('password')->group(function () {
-    Route::post('/forgot', [PasswordResetController::class, 'sendResetLink']);
-    Route::post('/reset', [PasswordResetController::class, 'resetPassword']);
-});
 
 Route::post('/password/reset-otp', [PasswordResetOtpController::class, 'sendResetOtp']);
 Route::post('/password/verify-otp', [PasswordResetOtpController::class, 'verifyResetOtp']);
@@ -198,67 +242,11 @@ Route::get('/tes', function () {
     return response()->json(['status' => 'OK']);
 });
 
-Route::get('/test-db', function () {
-    return DB::table('pemesanan')->limit(5)->get();
-});
-
-Route::middleware('auth:sanctum')->prefix('chat')->group(function () {
-
-    // Start chat baru
-    Route::post('/start', [ChatController::class, 'start'])->name('chat.start');
-
-    // List semua chat user
-    Route::get('/list', [ChatController::class, 'listChats'])->name('chat.list');
-
-    // Ambil pesan satu chat
-    Route::get('/{chat_id}/messages', [ChatController::class, 'messages'])->name('chat.messages');
-
-    // Kirim pesan ke chat
-    Route::post('/{chat_id}/send', [ChatController::class, 'send'])->name('chat.send');
-
-    // Tandai pesan sudah dibaca
-    Route::put('/{chat_id}/read', [ChatController::class, 'markRead'])->name('chat.read');
-});
-
-Route::middleware('auth:sanctum')->group(function () {
-
-    Route::get('/notifications', [NotifikasiController::class, 'index']);
-
-    Route::post('/notifications', [NotifikasiController::class, 'create']);
-
-    Route::post('/notifications/{id}/read', [NotifikasiController::class, 'markRead']);
-});
-
-// ===============================
-// 🔹 Komplain
-// ===============================
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/complaints', [ComplaintController::class, 'store']);
-});
-
-Route::middleware('auth:sanctum')->get('/complaints', [ComplaintController::class, 'index']);
-
-
-
-//benner
-Route::get('/banners', [BannerController::class, 'index']);
-
-
-
-// ===============================
-// 🔹 tEKNISI
-// ===============================
-// Teknisi menerima pekerjaan
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/pemesanan/{id}/terima', [App\Http\Controllers\Api\TeknisiPesananController::class, 'terimaPekerjaan']);
-    Route::post('/teknisi/pemesanan/{id}/mulai', [TeknisiPesananController::class, 'mulaiKerja']);
-});
-Route::middleware('auth:sanctum')->prefix('teknisi')->group(function () {
-    Route::get('/pesanan/baru', [TeknisiPesananController::class, 'pesananBaru']);
-    Route::get('/pesanan/dijadwalkan', [TeknisiPesananController::class, 'dijadwalkan']);
-    Route::get('/pesanan/berjalan', [TeknisiPesananController::class, 'pesananBerjalan']);
-    Route::post('/pemesanan/{id}/sampai-lokasi', [TeknisiPesananController::class, 'sampaiLokasi']);
-});
+/*
+|--------------------------------------------------------------------------
+| TRACKING & LOKASI
+|--------------------------------------------------------------------------
+*/
 
 Route::post('/update-lokasi-teknisi', [LokasiController::class, 'update']);
 Route::get('/lokasi-teknisi/{id_teknisi}', [LokasiController::class, 'getLokasi']);
@@ -267,53 +255,58 @@ Route::post('/tracking/store', [TrackingController::class, 'storeLocation']);
 Route::get('/tracking/latest/{id_teknisi}', [TrackingController::class, 'getLatestLocation']);
 Route::get('/tracking/customer/{id_pemesanan}', [TrackingController::class, 'getCustomerTracking']);
 
-Route::middleware('auth:sanctum')->group(function () {
+/*
+|--------------------------------------------------------------------------
+| PEMESANAN TEKNISI
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum', 'role:teknisi')->group(function () {
+    Route::get('/teknisi/pesanan/baru', [TeknisiPesananController::class, 'pesananBaru']);
+    Route::post('/pemesanan/{id}/terima', [TeknisiPesananController::class, 'terimaPekerjaan']);
+    Route::post('/teknisi/pemesanan/{id}/mulai', [TeknisiPesananController::class, 'mulaiKerja']);
     Route::post('/pemesanan/{id}/upload-bukti', [BuktiController::class, 'uploadBukti']);
     Route::get('/pemesanan/{id}/bukti', [BuktiController::class, 'getByPemesanan']);
     Route::post('/pemesanan/{id}/selesaikan', [TeknisiPesananController::class, 'selesaikanPekerjaan']);
+    Route::post('/pemesanan/{id}/sampai-lokasi', [TeknisiPesananController::class, 'sampaiLokasi']);
 });
 
-Route::get('/test', function () {
-    return response()->json(["status" => "API hidup"]);
-});
+/*
+|--------------------------------------------------------------------------
+| VERIFIKASI TEKNISI
+|--------------------------------------------------------------------------
+*/
 
-Route::middleware('auth:sanctum')->get('/teknisi/riwayat', [TaskController::class, 'getRiwayatTeknisi']);
-
-Route::get('/user/{id}/phone', [ChatController::class, 'getPhone']);
-
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/teknisi/verifikasi/status', [VerifikasiTeknisiController::class, 'status']);
-});
 Route::middleware('auth:sanctum')->post('/verifikasi-teknisi', [VerifikasiTeknisiController::class, 'store']);
+Route::middleware('auth:sanctum')->get('/teknisi/verifikasi/status', [VerifikasiTeknisiController::class, 'status']);
 
-Route::middleware('auth:sanctum')->group(function () {
+/*
+|--------------------------------------------------------------------------
+| UPLOAD & OCR KTP
+|--------------------------------------------------------------------------
+*/
 
-    Route::post('/chat/start', [ChatController::class, 'start']);
+Route::post('/scan-ktp', [VerifikasiTeknisiController::class, 'scanKTP']); // <- endpoint OCR KTP
 
-    Route::get('/chat/{id}/detail', [ChatController::class, 'detail']);
+/*
+|--------------------------------------------------------------------------
+| ULASAN
+|--------------------------------------------------------------------------
+*/
 
-    Route::get('/user/{id}/phone', [ChatController::class, 'getPhone']);
-
-    Route::get('/chat/{id}/messages', [ChatController::class, 'messages']);
-
-    Route::post('/chat/send', [ChatController::class, 'send']);
-
-    Route::delete('/chat/message/{id}', [ChatController::class, 'destroy']);
-});
-// Public (siapa pun bisa lihat ulasan teknisi)
+// public
 Route::get('/teknisi/{id}/ulasan', [UlasanController::class, 'getUlasanTeknisi']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    // buat ulasan
     Route::post('/ulasan', [UlasanController::class, 'create']);
-
-    // cek ulasan pemesanan (untuk user)
     Route::get('/pemesanan/{id}/ulasan', [UlasanController::class, 'cekUlasanPemesanan']);
 });
 
-
-
+/*
+|--------------------------------------------------------------------------
+| GALERI TEKNISI
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/teknisi/update_profile', [TeknisiController::class, 'updateProfile']);
@@ -321,22 +314,34 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/teknisi/galeri/{id}', [TeknisiController::class, 'deleteGaleri']);
 });
 
-Route::middleware('auth:sanctum')->get('/teknisi/{id}/galeri', 
-    [TeknisiController::class, 'getGaleri']);
+Route::middleware('auth:sanctum')->get('/teknisi/{id}/galeri', [TeknisiController::class, 'getGaleri']);
 
+/*
+|--------------------------------------------------------------------------
+| KEAHLIAN TEKNISI
+|--------------------------------------------------------------------------
+*/
 
-// ===============================
-// 🔹 Tambah Layanan Teknisi
-// ===============================
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/teknisi/keahlian', [KeahlianTeknisiController::class, 'store']);
-    Route::get('/teknisi/keahlian', [KeahlianTeknisiController::class, 'getByTeknisi']);
-    Route::get('/teknisi/{id_teknisi}/keahlian', [KeahlianTeknisiController::class, 'getByTeknisiId']);
-    Route::put('/teknisi/keahlian/{id}', [KeahlianTeknisiController::class, 'update']);
-    Route::delete('/teknisi/keahlian/{id}', [KeahlianTeknisiController::class, 'destroy']);
+    Route::post('/teknisi/keahlian', [App\Http\Controllers\Teknisi\KeahlianTeknisiController::class, 'store']);
+    Route::get('/teknisi/keahlian', [App\Http\Controllers\Teknisi\KeahlianTeknisiController::class, 'getByTeknisi']);
+    Route::get('/teknisi/{id_teknisi}/keahlian', [App\Http\Controllers\Teknisi\KeahlianTeknisiController::class, 'getByTeknisiId']);
+    Route::put('/teknisi/keahlian/{id}', [App\Http\Controllers\Teknisi\KeahlianTeknisiController::class, 'update']);
+    Route::delete('/teknisi/keahlian/{id}', [App\Http\Controllers\Teknisi\KeahlianTeknisiController::class, 'destroy']);
 });
 
-Route::get('/keahlian', [KeahlianController::class, 'index']); // public / authenticated sesuaikan kebutuhan
 
+/*
+|--------------------------------------------------------------------------
+| PENDAPATAN TEKNISI
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/teknisi/pendapatan', [PendapatanTeknisi::class, 'pendapatan']);
+});
+
+
+// public
+Route::get('/keahlian', [KeahlianController::class, 'index']);
 Route::get('/kategori', [App\Http\Controllers\KategoriController::class, 'index']);
-Route::get('/keahlian', [App\Http\Controllers\KeahlianController::class, 'index']); // accepts optional ?kategori_id=

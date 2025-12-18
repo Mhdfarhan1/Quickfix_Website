@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Auth\Events\Failed;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+
 
 class AuthController extends Controller
 {

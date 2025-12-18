@@ -38,6 +38,8 @@ use App\Http\Controllers\Teknisi\KeahlianTeknisiController;
 use App\Http\Controllers\MidtransWebhookController;
 
 
+
+
 use App\Http\Controllers\UserController;
 Route::apiResource('users', UserController::class);
 
@@ -345,3 +347,16 @@ Route::middleware('auth:sanctum')->group(function () {
 // public
 Route::get('/keahlian', [KeahlianController::class, 'index']);
 Route::get('/kategori', [App\Http\Controllers\KategoriController::class, 'index']);
+
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/complaints', [ComplaintController::class, 'index']);
+    Route::post('/complaints', [ComplaintController::class, 'store']);
+});
+
+
+// =====================
+// BANNER (PUBLIC API)
+// =====================
+Route::get('/banners', [BannerController::class, 'index']);

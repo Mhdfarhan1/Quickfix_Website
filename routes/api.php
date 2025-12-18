@@ -33,8 +33,10 @@ use App\Http\Controllers\Api\VerifikasiTeknisiController;
 use App\Http\Controllers\Api\FlipCallbackController;
 use App\Http\Controllers\Api\TeknisiPesananController;
 use App\Http\Controllers\Api\PasswordResetOtpController;
+use App\Http\Controllers\Api\PendapatanTeknisi;
 use App\Http\Controllers\Teknisi\KeahlianTeknisiController;
 use App\Http\Controllers\MidtransWebhookController;
+
 
 use App\Http\Controllers\UserController;
 Route::apiResource('users', UserController::class);
@@ -327,6 +329,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/teknisi/keahlian/{id}', [App\Http\Controllers\Teknisi\KeahlianTeknisiController::class, 'update']);
     Route::delete('/teknisi/keahlian/{id}', [App\Http\Controllers\Teknisi\KeahlianTeknisiController::class, 'destroy']);
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| PENDAPATAN TEKNISI
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/teknisi/pendapatan', [PendapatanTeknisi::class, 'pendapatan']);
+});
+
 
 // public
 Route::get('/keahlian', [KeahlianController::class, 'index']);

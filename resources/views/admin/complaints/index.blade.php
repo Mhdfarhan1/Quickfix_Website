@@ -22,14 +22,12 @@
             </div>
         @endif
 
-        {{-- FILTER BAR ================================================ --}}
+        {{-- FILTER BAR --}}
         <form method="GET" class="mb-4 flex items-center justify-between gap-3 flex-wrap">
-
-            {{-- ENTRIES --}}
             <div class="relative">
                 <select name="entries" onchange="this.form.submit()" class="appearance-none border border-gray-300 rounded-xl bg-white text-sm px-4 py-2 pr-10
-                               shadow-sm hover:border-blue-400 focus:border-blue-500 focus:ring focus:ring-blue-200/40
-                               transition-all cursor-pointer font-medium">
+                                       shadow-sm hover:border-blue-400 focus:border-blue-500 focus:ring focus:ring-blue-200/40
+                                       transition-all cursor-pointer font-medium">
                     <option value="5" {{ request('entries', $perPage ?? 10) == 5 ? 'selected' : '' }}>5</option>
                     <option value="10" {{ request('entries', $perPage ?? 10) == 10 ? 'selected' : '' }}>10</option>
                     <option value="25" {{ request('entries', $perPage ?? 10) == 25 ? 'selected' : '' }}>25</option>
@@ -41,7 +39,6 @@
                 </div>
             </div>
 
-            {{-- SEARCH --}}
             <div class="flex items-center gap-2">
                 <input type="text" name="search" id="searchInput" value="{{ request('search') }}"
                     placeholder="Cari user / kategori / masalah..."
@@ -53,10 +50,9 @@
             </div>
         </form>
 
-        {{-- TABLE WRAPPER =============================================== --}}
+        {{-- TABLE --}}
         <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
             <div class="overflow-x-auto">
-
                 <table class="w-full text-left text-sm text-gray-600">
                     <thead
                         class="bg-gray-50 border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500 font-bold">
@@ -73,19 +69,20 @@
 
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($complaints as $index => $c)
-                            <tr class="hover:bg-blue-50/50 transition duration-200 ease-in-out">
+                            @php
+                                // normalisasi kategori
+                                $kategori = strtolower(trim((string) ($c->kategori ?? '')));
+                            @endphp
 
-                                {{-- NO --}}
+                            <tr class="hover:bg-blue-50/50 transition duration-200 ease-in-out">
                                 <td class="px-6 py-4 font-medium text-gray-900">
                                     {{ $complaints->firstItem() + $index }}
                                 </td>
 
-                                {{-- TANGGAL --}}
                                 <td class="px-6 py-4">
                                     {{ $c->created_at?->format('d M Y H:i') ?? '-' }}
                                 </td>
 
-                                {{-- USER --}}
                                 <td class="px-6 py-4">
                                     <div class="flex flex-col">
                                         <span class="text-sm font-semibold text-gray-800">
@@ -97,20 +94,18 @@
                                     </div>
                                 </td>
 
-                                {{-- KATEGORI --}}
                                 <td class="px-6 py-4 capitalize">
                                     <span class="px-3 py-1 rounded-full text-xs font-semibold
                                                 @class([
-                                                    'bg-blue-100 text-blue-700' => $c->kategori === 'pesanan',
-                                                    'bg-amber-100 text-amber-700' => $c->kategori === 'pembayaran',
-                                                    'bg-purple-100 text-purple-700' => $c->kategori === 'aplikasi',
-                                                    'bg-rose-100 text-rose-700' => $c->kategori === 'akun'
+                                                    'bg-blue-100 text-blue-700' => $kategori === 'pesanan',
+                                                    'bg-amber-100 text-amber-700' => $kategori === 'pembayaran',
+                                                    'bg-purple-100 text-purple-700' => $kategori === 'aplikasi',
+                                                    'bg-rose-100 text-rose-700' => $kategori === 'akun'
                                                 ])">
-                                        {{ $c->kategori }}
+                                        {{ ucfirst($kategori ?: ($c->kategori ?? '-')) }}
                                     </span>
                                 </td>
 
-                                {{-- JENIS MASALAH --}}
                                 <td class="px-6 py-4">
                                     <div class="max-w-xs">
                                         <span class="font-semibold text-gray-800">{{ $c->jenis_masalah }}</span>
@@ -118,7 +113,6 @@
                                     </div>
                                 </td>
 
-                                {{-- STATUS --}}
                                 <td class="px-6 py-4 text-right">
                                     @php
                                         $color = [
@@ -133,45 +127,39 @@
                                     </span>
                                 </td>
 
-                                {{-- AKSI --}}
+                                {{-- ACTIONS: refund buttons ALWAYS ACTIVE for 'pembayaran' and 'pesanan' --}}
                                 <td class="px-6 py-4 text-right flex justify-end gap-2">
-                                    <!-- Detail -->
+
                                     <a href="{{ route('admin.complaints.show', $c->id) }}"
                                         class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700">
                                         <i class="fa-solid fa-eye text-[11px]"></i> Detail
                                     </a>
 
-                                    @if($c->kategori === 'pesanan')
-                                        @php
-                                            // cek ketersediaan pemesanan dan statusnya (aman bila relasi belum eager-loaded)
-                                            $hasOrder = (bool) $c->pemesanan;
-                                            $orderStatus = $hasOrder ? $c->pemesanan->status_pekerjaan : null;
-                                            $canRefund = $hasOrder && !in_array($orderStatus, ['batal', 'selesai']);
-                                        @endphp
-
-                                        @if(!$hasOrder)
-                                            <!-- tombol disabled jika tidak ada pemesanan terkait -->
-                                            <button
-                                                class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-200 text-gray-500 text-xs font-semibold cursor-not-allowed"
-                                                title="Tidak ada data pemesanan terkait">
+                                    {{-- pembayaran: selalu aktif --}}
+                                    @if($kategori === 'pembayaran')
+                                        <form action="{{ route('admin.complaints.refund', $c->id) }}" method="POST"
+                                            class="inline-block refund-form">
+                                            @csrf
+                                            <button type="submit"
+                                                class="refund-button inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500 text-white hover:bg-rose-600">
                                                 <i class="fa-solid fa-money-bill-wave"></i> Refund
                                             </button>
-                                        @else
-                                            <form action="{{ route('admin.complaints.refund', $c->id) }}" method="POST"
-                                                class="inline-block">
-                                                @csrf
-                                                <button type="submit"
-                                                    onclick="return confirm('Yakin ingin proses refund dan batalkan pesanan ini?')"
-                                                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold
-                                                                {{ $canRefund ? 'bg-rose-500 text-white hover:bg-rose-600' : 'bg-gray-200 text-gray-500 cursor-not-allowed' }}"
-                                                    {{ $canRefund ? '' : 'disabled' }}>
-                                                    <i class="fa-solid fa-money-bill-wave"></i> Refund
-                                                </button>
-                                            </form>
-                                        @endif
+                                        </form>
                                     @endif
-                                </td>
 
+                                    {{-- pesanan: juga selalu aktif --}}
+                                    @if($kategori === 'pesanan')
+                                        <form action="{{ route('admin.complaints.refund', $c->id) }}" method="POST"
+                                            class="inline-block refund-form">
+                                            @csrf
+                                            <button type="submit"
+                                                class="refund-button inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500 text-white hover:bg-rose-600">
+                                                <i class="fa-solid fa-money-bill-wave"></i> Refund
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                </td>
                             </tr>
                         @empty
                             <tr>
@@ -186,10 +174,8 @@
             </div>
         </div>
 
-        {{-- PAGINATION INFO + PREV/NEXT ================================= --}}
+        {{-- PAGINATION --}}
         <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
-
-            {{-- INFO --}}
             <div>
                 @if($complaints->total() > 0)
                     Menampilkan
@@ -204,35 +190,27 @@
                 @endif
             </div>
 
-            {{-- PREV/NEXT --}}
             @php $paginator = $complaints->appends(request()->except('page')); @endphp
 
             <div class="flex items-center gap-2">
-
-                {{-- PREVIOUS --}}
-                <a href="{{ $paginator->previousPageUrl() ?: '#' }}" class="px-3 py-1 rounded-lg border text-xs 
-                        {{ $paginator->onFirstPage()
-        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-        : 'bg-white hover:bg-gray-100' }}">
+                <a href="{{ $paginator->previousPageUrl() ?: '#' }}"
+                    class="px-3 py-1 rounded-lg border text-xs 
+                            {{ $paginator->onFirstPage() ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-100' }}">
                     Previous
                 </a>
 
-                {{-- CURRENT PAGE --}}
                 <span class="text-xs">
                     Halaman <span class="font-semibold">{{ $paginator->currentPage() }}</span>
                     / <span class="font-semibold">{{ $paginator->lastPage() }}</span>
                 </span>
 
-                {{-- NEXT --}}
-                <a href="{{ $paginator->hasMorePages() ? $paginator->nextPageUrl() : '#' }}" class="px-3 py-1 rounded-lg border text-xs
-                        {{ $paginator->hasMorePages()
-        ? 'bg-white hover:bg-gray-100'
-        : 'bg-gray-100 text-gray-400 cursor-not-allowed' }}">
+                <a href="{{ $paginator->hasMorePages() ? $paginator->nextPageUrl() : '#' }}"
+                    class="px-3 py-1 rounded-lg border text-xs
+                            {{ $paginator->hasMorePages() ? 'bg-white hover:bg-gray-100' : 'bg-gray-100 text-gray-400 cursor-not-allowed' }}">
                     Next
                 </a>
             </div>
         </div>
-
     </div>
 
     {{-- AUTO SEARCH --}}
@@ -246,5 +224,130 @@
                 this.form.submit();
             }, 350);
         });
+    </script>
+
+    {{-- HOTFIX JS: force-enable refund buttons + safe fetch submit --}}
+    <script>
+        (function () {
+            function getCsrfToken() {
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                return meta ? meta.getAttribute('content') : null;
+            }
+
+            function enableAndWireRefundButtons() {
+                const candidates = Array.from(document.querySelectorAll('.refund-button, button, a'));
+                const csrf = getCsrfToken();
+
+                candidates.forEach(el => {
+                    const text = (el.innerText || '').trim().toLowerCase();
+                    const hasIcon = !!(el.querySelector && el.querySelector('i.fa-money-bill-wave'));
+                    if (!(text.includes('refund') || hasIcon)) return;
+
+                    // ensure clickable: remove disabled attr and disabling classes
+                    if (el.hasAttribute && el.hasAttribute('disabled')) el.removeAttribute('disabled');
+                    try { el.disabled = false; } catch (e) { }
+                    el.classList.remove('bg-gray-200', 'text-gray-500', 'cursor-not-allowed', 'opacity-50');
+                    el.classList.add('bg-rose-500', 'text-white');
+                    el.style.pointerEvents = 'auto';
+                    el.style.opacity = '1';
+
+                    // replace with clone to remove attached listeners that could block action
+                    const clean = el.cloneNode(true);
+                    // ensure same class names for styling
+                    clean.className = el.className;
+
+                    // attach new click handler only if it's inside a form or has form action nearby
+                    clean.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        // confirm
+                        const confirmed = confirm('Yakin ingin proses refund dan batalkan pesanan ini?');
+                        if (!confirmed) return;
+
+                        // find closest form
+                        let form = el.closest('form');
+                        const action = (form && form.getAttribute('action')) || el.getAttribute('data-action') || el.dataset.action;
+                        const method = (form && (form.getAttribute('method') || 'POST')) || 'POST';
+
+                        // If there is a form element, submit it normally (safer)
+                        if (form) {
+                            // remove any disabled on submit buttons and submit programmatically
+                            try {
+                                form.querySelectorAll('button, input[type="submit"]').forEach(b => { if (b.disabled) b.disabled = false; });
+                            } catch (e) { }
+                            // fallback to programmatic fetch in case form submit is prevented by other scripts
+                            try {
+                                form.submit();
+                                return;
+                            } catch (e) {
+                                // continue to fetch fallback
+                                console.warn('form.submit failed, falling back to fetch', e);
+                            }
+                        }
+
+                        // If no form or form.submit blocked, use fetch POST
+                        if (!action) {
+                            console.error('No form action found for refund button; cannot submit.');
+                            alert('Gagal mengirim refund: action tidak ditemukan.');
+                            return;
+                        }
+
+                        const headers = { 'Accept': 'application/json' };
+                        if (csrf) headers['X-CSRF-TOKEN'] = csrf;
+                        // build body as form data with optional reason (none here)
+                        const body = new URLSearchParams();
+                        body.append('_method', method.toUpperCase() === 'POST' ? 'POST' : method.toUpperCase());
+                        // append CSRF token in body if header not present
+                        if (!csrf) body.append('_token', document.querySelector('input[name="_token"]') ? document.querySelector('input[name="_token"]').value : '');
+
+                        fetch(action, {
+                            method: 'POST',
+                            headers: headers,
+                            body: body
+                        })
+                            .then(resp => {
+                                if (resp.redirected) {
+                                    window.location.href = resp.url;
+                                    return;
+                                }
+                                return resp.json().catch(() => null);
+                            })
+                            .then(json => {
+                                // if server responds with json message or redirect already handled
+                                if (json && json.message) {
+                                    alert(json.message);
+                                    // reload to get updated status
+                                    window.location.reload();
+                                } else {
+                                    // fallback: reload page to reflect change
+                                    window.location.reload();
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Refund fetch failed', err);
+                                alert('Terjadi kesalahan saat proses refund. Cek console.');
+                            });
+                    }, { passive: false });
+
+                    // replace original element with clean clone + our listener
+                    try {
+                        el.parentNode.replaceChild(clean, el);
+                    } catch (e) {
+                        // if replacement fails, still attach handler to original
+                        console.warn('replaceChild failed', e);
+                        // attach handler to original (best-effort)
+                        // already have handler above on clean; but if replacement failed, attach to el
+                        // NOTE: attaching duplicate handlers could occur in successive runs; that's ok for debug.
+                    }
+                });
+            }
+
+            // run after DOM ready, and also AFTER a short timeout to override scripts that run later
+            document.addEventListener('DOMContentLoaded', function () {
+                try { enableAndWireRefundButtons(); } catch (e) { console.error(e); }
+                // run again after 600ms and 1500ms to override late scripts
+                setTimeout(enableAndWireRefundButtons, 600);
+                setTimeout(enableAndWireRefundButtons, 1500);
+            });
+        })();
     </script>
 @endsection
